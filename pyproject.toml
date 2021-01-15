@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "splunk-connect-for-snmp-traps"
+version = "0.1.0"
+description = "Translate SNMP traps for Splunk Products"
+authors = ["rfaircloth-splunk <rfaircloth@splunk.com>"]
+license = "APACHE-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pysnmp = "^4.4.12"
+
+[tool.poetry.dev-dependencies]
+pytest-splunk-addon = "^1.4.0"
+pytest = "*"
+black = "19.10b0"
+
+[tool.poetry.scripts]
+sc4s-traps = "splunk_connect_for_snmp_traps:main"
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
+
+
