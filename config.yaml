@@ -1,0 +1,6 @@
+# Splunk Connect for SNMP Traps
+# Sample Configuration file
+communities:
+  v1:
+    - public
+    - "my-area"
