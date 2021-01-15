@@ -1,6 +1,7 @@
 import signal
 import logging.config
 import argparse
+import yaml
 
 from pysnmp.entity import engine, config
 from pysnmp.carrier.asyncore.dgram import udp, udp6
@@ -18,7 +19,7 @@ def receiveSignal(signalNumber, frame):
     return
 
 
-def trap_server(port):
+def trap_server(port, server_config):
     # Create SNMP engine with autogenernated engineID and pre-bound
     # to socket transport dispatcher
     snmpEngine = engine.SnmpEngine()
@@ -42,7 +43,9 @@ def trap_server(port):
     # SNMPv1/2c setup
 
     # SecurityName <-> CommunityName mapping
-    config.addV1System(snmpEngine, "my-area", "public")
+    for community in server_config["communities"]["v1"]:
+        logger.info(f"Configuring V1 {community}")
+        config.addV1System(snmpEngine, community, community)
 
     # Register SNMP Application at the SNMP engine
     ntfrcv.NotificationReceiver(snmpEngine, cbFun)
@@ -100,19 +103,23 @@ def main():
         help="Provide logging level. Example --loglevel debug, default=warning",
     )
     parser.add_argument(
-        "-p",
-        "--port",
-        default="2062",
-        help="Port used to accept traps,
-        type=int
+        "-p", "--port", default="2062", help="Port used to accept traps", type=int
     )
+    parser.add_argument("-c", "--config", default="config.yaml", help="Config File")
     args = parser.parse_args()
     log_level = args.loglevel.upper()
+    config_file = args.config
     logging.getLogger().setLevel(log_level)
     logger.debug(f"Log Level is {log_level}")
+    logger.debug(f"Config file is {config_file}")
 
     logger.debug("Completed Argument parsing")
-    trap_server(port=args.port)
+
+    with open(config_file, "r") as yamlfile:
+        server_config = yaml.load(yamlfile, Loader=yaml.FullLoader)
+
+    logger.debug(f"Server Config is:  {server_config}")
+    trap_server(port=args.port, server_config=server_config)
 
 
 if __name__ == "__main__":
