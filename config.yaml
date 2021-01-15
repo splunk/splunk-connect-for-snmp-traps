@@ -1,5 +1,7 @@
 # Splunk Connect for SNMP Traps
 # Sample Configuration file
+ipv4: True
+ipv6: False
 communities:
   v1:
     - public
