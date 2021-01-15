@@ -29,16 +29,20 @@ def trap_server(port, server_config):
     )
 
     # UDP over IPv4
-    config.addTransport(
-        snmpEngine,
-        udp.domainName,
-        udp.UdpTransport().openServerMode(("127.0.0.1", port)),
-    )
+    if server_config["ipv4"]:
+        config.addTransport(
+            snmpEngine,
+            udp.domainName,
+            udp.UdpTransport().openServerMode(("127.0.0.1", port)),
+        )
 
     # UDP over IPv6
-    config.addTransport(
-        snmpEngine, udp6.domainName, udp6.Udp6Transport().openServerMode(("::1", port))
-    )
+    if server_config["ipv6"]:
+        config.addTransport(
+            snmpEngine,
+            udp6.domainName,
+            udp6.Udp6Transport().openServerMode(("::1", port)),
+        )
 
     # SNMPv1/2c setup
 
@@ -94,7 +98,7 @@ def requestObserver(snmpEngine, execpoint, variables, cbCtx):
 
 
 def main():
-
+    logger.info(f"Startup Config")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-l",
@@ -107,13 +111,15 @@ def main():
     )
     parser.add_argument("-c", "--config", default="config.yaml", help="Config File")
     args = parser.parse_args()
+
     log_level = args.loglevel.upper()
     config_file = args.config
-    logging.getLogger().setLevel(log_level)
-    logger.debug(f"Log Level is {log_level}")
-    logger.debug(f"Config file is {config_file}")
 
-    logger.debug("Completed Argument parsing")
+    logging.getLogger().setLevel(log_level)
+    logger.info(f"Log Level is {log_level}")
+    logger.info(f"Config file is {config_file}")
+
+    logger.info("Completed Argument parsing")
 
     with open(config_file, "r") as yamlfile:
         server_config = yaml.load(yamlfile, Loader=yaml.FullLoader)
