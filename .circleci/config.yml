@@ -52,8 +52,6 @@ jobs:
       image: ubuntu-1604:202007-01
       docker_layer_caching: true
     steps:
-      - setup_remote_docker:
-          docker_layer_caching: true
       - attach_workspace:
           at: /tmp/workspace
       - checkout
