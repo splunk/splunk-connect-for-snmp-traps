@@ -14,7 +14,7 @@ lxml = "^4.6"
 [tool.poetry.dev-dependencies]
 #pytest-splunk-addon = "^1.4.0"
 pytest = "*"
-black = "19.10b0"
+black = "20.8b1"
 
 [tool.poetry.scripts]
 sc4snmp-traps = "splunk_connect_for_snmp_traps:main"
