@@ -48,8 +48,9 @@ jobs:
       - run: npx semantic-release
 
   publish:
-    docker:
-      - image: circleci/python:3.7
+    machine:
+      image: ubuntu-1604:202007-01
+      docker_layer_caching: true
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
