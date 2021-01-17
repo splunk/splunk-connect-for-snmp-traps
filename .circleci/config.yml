@@ -12,10 +12,11 @@ orbs:
 
 jobs:
   build:
-    machine:
-      image: ubuntu-1604:202007-01
-      docker_layer_caching: true
+    docker:
+      - image: circleci/python:3.8.6
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
       - checkout
       - run:
           name: Github packages docker Login
@@ -48,10 +49,11 @@ jobs:
       - run: npx semantic-release
 
   publish:
-    machine:
-      image: ubuntu-1604:202007-01
-      docker_layer_caching: true
+    docker:
+      - image: circleci/python:3.8.6
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
       - attach_workspace:
           at: /tmp/workspace
       - checkout
