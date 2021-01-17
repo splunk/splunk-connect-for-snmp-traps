@@ -15,6 +15,8 @@ jobs:
     docker:
       - image: circleci/python:3.8.6
     steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
       - checkout
       - run:
           name: Github packages docker Login
