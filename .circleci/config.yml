@@ -12,9 +12,8 @@ orbs:
 
 jobs:
   build:
-    machine:
-      image: ubuntu-1604:202007-01
-      docker_layer_caching: true
+    docker:
+      image: circleci/python:3.8.6
     steps:
       - checkout
       - run:
