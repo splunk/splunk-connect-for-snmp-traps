@@ -1,6 +1,7 @@
 import logging
-from pysnmp.entity import engine, config
+
 from pysnmp.carrier.asyncore.dgram import udp, udp6
+from pysnmp.entity import engine, config
 from pysnmp.entity.rfc3413 import ntfrcv
 
 logger = logging.getLogger(__name__)
@@ -10,6 +11,7 @@ logger = logging.getLogger(__name__)
 # SNMP Engine and passed local variables at code point's local scope
 # noinspection PyUnusedLocal,PyUnusedLocal
 def request_observer(snmp_engine, execution_point, variables, callback_ctx):
+    logger.debug(f'Raw data is "{variables}"')
     logger.debug('Execution point: %s' % execution_point)
     logger.debug(
         '* transportDomain: %s'
