@@ -1,8 +1,8 @@
-#
-Original PDU
+# SNMP : Domain Specific Language and Translations
 
-    ``
-`
+# Original PDU
+
+```
  variable-bindings=VarBindList:
   VarBind:
    name=1.3.6.1.2.1.1.3.0
@@ -16,14 +16,12 @@ Original PDU
     value=ObjectSyntax:
      simple=SimpleSyntax:
       objectID-value=1.3.6.1.6.3.1.1.5.2
-`
-``
+```
 
 #
 Translated data structure
 
-    ``
-`py
+```py
 custom structure spec:
 {
     "mib": Translated oid = Translated value,
@@ -32,11 +30,9 @@ custom structure spec:
     "val_type": Type of value,
     "value": Original value
 }
-`
-``
+```
 
-``
-`json
+```json
 {
     "mib": "SNMPv2-MIB::sysUpTime.0 = 184027995",
     "oid": "1.3.6.1.2.1.1.3.0",
@@ -44,11 +40,9 @@ custom structure spec:
     "val_type": "TimeTicks",
     "value": "184027995"
 }
-`
-``
+```
 
-``
-`json
+```json
 {
     "mib": "SNMPv2-MIB::snmpTrapOID.0 = SNMPv2-MIB::warmStart",
     "oid": "1.3.6.1.6.3.1.1.4.1.0",
@@ -56,24 +50,33 @@ custom structure spec:
     "val_type": "ObjectIdentifier",
     "value": "1.3.6.1.6.3.1.1.5.2"
 }
-`
-``
+```
 
 
 
 
-#
-Simplified MIB
+# Simplified MIB
 
-    >
-    SNMPv2 - MIB::snmpTrapOID .0 = SNMPv2 - MIB::warmStart `
+```
+SNMPv2 - MIB::snmpTrapOID.0 = SNMPv2 - MIB::warmStart
+```
 
-Shall we replace above MIB value to:
+> Shall we replace above MIB value to:
 
-`
-`` {
-    mib_name: snmpTrapOID .0
-    mib_value: warmStart
+
+```json
+{
+    "mib_name": "snmpTrapOID.0",
+    "mib_value": "warmStart"
 }
-``
-`
+```
+
+OR
+
+
+```json
+{
+    "mib_name": "snmpTrapOID",
+    "mib_value": "warmStart"
+}
+```
