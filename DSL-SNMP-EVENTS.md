@@ -18,8 +18,7 @@
       objectID-value=1.3.6.1.6.3.1.1.5.2
 ```
 
-#
-Translated data structure
+# Translated data structure
 
 ```py
 custom structure spec:
