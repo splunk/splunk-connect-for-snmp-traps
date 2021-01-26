@@ -7,7 +7,7 @@ from splunk_connect_for_snmp_traps.manager import trap_server
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+    level=logging.DEBUG, format="%(asctime)s | %(name)s | %(levelname)s | %(message)s"
 )
 
 
@@ -34,7 +34,7 @@ def main():
     log_level = args.loglevel.upper()
     config_file = args.config
 
-    logging.getLogger().setLevel(log_level)
+    # logging.getLogger().setLevel(log_level)
     logger.info(f"Log Level is {log_level}")
     logger.info(f"Config file is {config_file}")
 
