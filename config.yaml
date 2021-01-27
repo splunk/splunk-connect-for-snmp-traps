@@ -1,11 +1,13 @@
 # Splunk Connect for SNMP Traps
 # Sample Configuration file
-ipv4: True
-ipv6: False
-communities:
-  v1:
-    - public
-    - "my-area"
+snmp:
+  port: 2062
+  ipv4: True
+  ipv6: False
+  communities:
+    v1:
+      - public
+      - "my-area"
 hec:
   protocol: https
   host: 127.0.0.1
