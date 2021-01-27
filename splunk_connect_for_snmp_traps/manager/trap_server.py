@@ -3,6 +3,11 @@ import logging
 from pysnmp.carrier.asyncore.dgram import udp, udp6
 from pysnmp.entity import engine, config
 from pysnmp.entity.rfc3413 import ntfrcv
+from pysnmp.smi import builder, view, compiler, rfc1902
+# from splunk_connect_for_snmp_traps.utilities import get_custom_translation_table
+import os
+import json
+import csv
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +41,94 @@ def snmp_callback_function(snmp_engine, state_reference, context_engine_id, cont
         'Notification from ContextEngineId "%s", ContextName "%s"'
         % (context_engine_id.prettyPrint(), context_name.prettyPrint())
     )
+    trap_event_string = ""
+    offset = 0
+    customTranslationTable = get_custom_translation_table()
     for name, val in var_binds:
         logger.debug('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
+        # extract oid and value
+        oid = name.prettyPrint()
+        value = val.prettyPrint()
+
+        # Extrat the types
+        cursor = "->"
+        nameType = name.prettyPrintType()
+        if cursor in nameType:
+            nameType = nameType.split(cursor)[1].strip()
+            
+        valType = val.prettyPrintType()
+        if cursor in valType:
+            valType = valType.split(cursor)[1].strip()
+
+        # custom translation 
+        custom_translated_oid = custom_translator(customTranslationTable, oid)
+        custom_translated_value = value
+        # tranlate value ONLY when it is oid
+        if valType == "ObjectName":
+            custom_translated_value = custom_translator(customTranslationTable, value)
+
+        # Constract the payload 
+        # TODO 
+        # 1. Clear the debugging statement -> change logging level back to info, remove snmp_debug.log file
+        # 2. Refact code 
+        offset += 1
+        trap_event_string += """
+        oid{offset} = {oid}
+        oid_type{offset} = {oid_type}
+        value{offset} = {value}
+        val_type{offset} = {val_type}
+        mib{offset} = {mib}
+        custom_mib{offset} = {custom_translated_oid} = {custom_translated_value}
+        """.format(offset=offset, oid=oid, oid_type=nameType, value=value, val_type=valType, mib=mib_translator(name, val), custom_translated_oid=custom_translated_oid, custom_translated_value=custom_translated_value )
+    logger.debug("--- Trap Event String ---")
+    logger.debug(trap_event_string)
+    logger.debug("--- Sent out Payload---")
+    payload = {
+        "event": trap_event_string
+    }
+    logger.debug("\n{}".format(json.dumps(payload, indent=4, sort_keys=True)))
+
+
+
+# Translate SNMP PDU varBinds into MIB objects using MIB
+def mib_translator(name, val):
+    # Assemble MIB browser
+    mibBuilder = builder.MibBuilder()
+    mibViewController = view.MibViewController(mibBuilder)
+    compiler.addMibCompiler(mibBuilder, sources=['file:///usr/share/snmp/mibs',
+                                                'http://mibs.snmplabs.com/asn1/@mib@'])
+
+    # Pre-load MIB modules we expect to work with
+    mibBuilder.loadModules('SNMPv2-MIB', 'SNMP-COMMUNITY-MIB')
+
+    # Run var-binds through MIB resolver
+    try:
+        varBind = rfc1902.ObjectType(rfc1902.ObjectIdentity(name), val).resolveWithMib(mibViewController)
+        logger.debug("* Translated PDU: %s" % varBind.prettyPrint())
+        return varBind.prettyPrint()
+    except Exception as e:
+        logger.error("Error happended in translateion: %s" % e)
+
+# Translate SNMP PDU varBinds into MIB objects using custom translation table
+def custom_translator(translation_table, oid):
+    label = translation_table.get(oid, None)
+    return label
+
+
+# Read the custom mib translation table into memory
+def get_custom_translation_table():
+    translation_table = {}
+    script_dir = os.path.dirname(__file__)  # Script directory
+    logger.debug("script_dir %s" % script_dir)
+    file_path = os.path.join(script_dir, "../custom_mib_string_table.csv")
+    logger.debug("file_path %s" % file_path)
+    with open(file_path) as files:
+        reader = csv.reader(files)
+        next(reader) # skip header
+        for row in reader:
+            logger.debug("data %s" % row)
+            translation_table[row[0]] = row[1]
+    return translation_table
 
 
 def trap_server(port, server_config):

@@ -4,8 +4,8 @@ import logging.config
 import yaml
 
 from splunk_connect_for_snmp_traps.manager.trap_server import trap_server
-from utilities import HecConfiguration
-from utilities import initialize_signals_handler
+from splunk_connect_for_snmp_traps.utilities import HecConfiguration
+from splunk_connect_for_snmp_traps.utilities import initialize_signals_handler
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,8 @@ def main():
     log_level = args.loglevel.upper()
     config_file = args.config
 
-    logging.getLogger().setLevel(log_level)
+    # TODO uncomment line 32
+    # logging.getLogger().setLevel(log_level)
     logger.info(f'Log Level is {log_level}')
     logger.info(f'Config file is {config_file}')
 
