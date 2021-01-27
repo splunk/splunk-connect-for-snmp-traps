@@ -67,7 +67,7 @@ def snmp_callback_function(snmp_engine, state_reference, context_engine_id, cont
         if valType == "ObjectName":
             custom_translated_value = custom_translator(customTranslationTable, value)
 
-        # Constract the payload 
+        # Construct trap string
         # TODO 
         # 1. Clear the debugging statement -> change logging level back to info, remove snmp_debug.log file
         # 2. Refact code 
@@ -83,6 +83,8 @@ def snmp_callback_function(snmp_engine, state_reference, context_engine_id, cont
     logger.debug("--- Trap Event String ---")
     logger.debug(trap_event_string)
     logger.debug("--- Sent out Payload---")
+
+    # Construct the payload 
     payload = {
         "event": trap_event_string
     }
