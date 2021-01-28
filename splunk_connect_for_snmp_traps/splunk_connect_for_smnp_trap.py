@@ -4,7 +4,7 @@ import logging.config
 import yaml
 
 from splunk_connect_for_snmp_traps.manager.trap_server import TrapServer
-from utilities import initialize_signals_handler
+from splunk_connect_for_snmp_traps.utilities import initialize_signals_handler
 
 logger = logging.getLogger(__name__)
 

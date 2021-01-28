@@ -37,7 +37,7 @@ class TrapServer:
 
     def post_trap_to_hec(self, variables_binds):
         endpoint = self._hec_config.endpoint()
-        headers = {'Authorization': f'Splunk {self._hec_config.authentication_token()}'}
+        headers = {'Authorization': f'Splunk {self._hec_config.get_authentication_token()}'}
         splunk_trap_data = ','.join([str(key) + str(value) for key, value in variables_binds])
         data = {'sourcetype': 'trap-server', 'event': splunk_trap_data}
         logger.debug(f'Posting trap to HEC using {self._hec_config.endpoint()} and headers {headers}')

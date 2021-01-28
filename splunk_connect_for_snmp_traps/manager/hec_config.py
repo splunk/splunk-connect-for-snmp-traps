@@ -11,5 +11,5 @@ class HecConfiguration:
         base_url = f'{self._host}:{self._port}'
         return urlunsplit((self._protocol, base_url, self._endpoint, '', ''))
 
-    def authentication_token(self):
+    def get_authentication_token(self):
         return self._authentication_token
