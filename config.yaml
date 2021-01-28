@@ -20,5 +20,3 @@ hec:
   authentication_token: <hec token>
 thread-pool:
   max-suggested-working-threads: 10
-logging:
-  level: "INFO"
