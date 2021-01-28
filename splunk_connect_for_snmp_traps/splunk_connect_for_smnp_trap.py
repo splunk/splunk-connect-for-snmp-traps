@@ -3,8 +3,7 @@ import logging.config
 
 import yaml
 
-from splunk_connect_for_snmp_traps.manager.trap_server import trap_server
-from splunk_connect_for_snmp_traps.utilities import HecConfiguration
+from splunk_connect_for_snmp_traps.manager.trap_server import TrapServer
 from splunk_connect_for_snmp_traps.utilities import initialize_signals_handler
 
 logger = logging.getLogger(__name__)
@@ -16,11 +15,8 @@ def main():
     parser.add_argument(
         '-l',
         '--loglevel',
-        default='debug',
+        default='info',
         help='Provide logging level. Example --loglevel debug, default=warning',
-    )
-    parser.add_argument(
-        '-p', '--port', default='2062', help='Port used to accept traps', type=int
     )
     parser.add_argument('-c', '--config', default='config.yaml', help='Config File')
     args = parser.parse_args()
@@ -28,8 +24,7 @@ def main():
     log_level = args.loglevel.upper()
     config_file = args.config
 
-    # TODO uncomment line 32
-    # logging.getLogger().setLevel(log_level)
+    logging.getLogger().setLevel(log_level)
     logger.info(f'Log Level is {log_level}')
     logger.info(f'Config file is {config_file}')
 
@@ -39,9 +34,8 @@ def main():
         server_config = yaml.load(yamlfile, Loader=yaml.FullLoader)
 
     logger.debug(f'Server Config is:  {server_config}')
-    hec = HecConfiguration(server_config['hec'])
-    logger.debug(f'HEC endpoint = {hec.endpoint()}, HEC token = {hec.authentication_token()}')
-    trap_server(port=args.port, server_config=server_config)
+    trap_server = TrapServer(server_config)
+    trap_server.run_trap_server()
 
 
 if __name__ == '__main__':

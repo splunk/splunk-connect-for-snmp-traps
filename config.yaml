@@ -1,14 +1,24 @@
 # Splunk Connect for SNMP Traps
 # Sample Configuration file
-ipv4: True
-ipv6: False
-communities:
-  v1:
-    - public
-    - "my-area"
+snmp:
+  port: 2062
+  ipv4: True
+  ipv6: False
+  communities:
+    v1:
+      - public
+      - "my-area"
+  mibs:
+    url:
+      - "file:///usr/share/snmp/mibs"
+      - "http://mibs.snmplabs.com/asn1/@mib@"
 hec:
   protocol: https
   host: 127.0.0.1
   port: 8088
   endpoint: /services/collector/event
-  authentication_token: 6b5dcda2-6ead-46bf-a03e-6a9f24c8bd30
+  authentication_token: <hec token>
+thread-pool:
+  max-suggested-working-threads: 10
+logging:
+  level: "INFO"
