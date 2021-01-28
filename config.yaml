@@ -14,3 +14,5 @@ hec:
   port: 8088
   endpoint: /services/collector/event
   authentication_token: 6b5dcda2-6ead-46bf-a03e-6a9f24c8bd30
+thread-pool:
+  max-suggested-working-threads: 10
