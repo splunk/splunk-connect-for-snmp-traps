@@ -26,10 +26,10 @@ class Translator:
         # Run var-binds through MIB resolver
         try:
             varBind = rfc1902.ObjectType(rfc1902.ObjectIdentity(name), val).resolveWithMib(mibViewController)
-            logger.debug(f'* Translated PDU: %s' % varBind.prettyPrint())
+            logger.debug(f'* Translated PDU: {varBind.prettyPrint()}')
             return varBind.prettyPrint()
         except Exception as e:
-            logger.error(f'Error happended in translateion: %s' % e)
+            logger.error(f'Error happended in translateion: {e}')
         finally:
             pass
 
@@ -42,10 +42,8 @@ class Translator:
     # Read the custom mib translation table into memory
     def get_custom_translation_table(self):
         translation_table = {}
-        script_dir = os.path.dirname(__file__)  # Script directory
-        logger.debug(f'script_dir %s' % script_dir)
-        file_path = os.path.join(script_dir, '../../lookups/custom_mib_string_table.csv')
-        logger.debug(f'file_path %s' % file_path)
+        file_path = os.path.join(os.getcwd(), 'lookups/custom_mib_string_table.csv')
+        logger.debug(f'file_path {file_path}')
         with open(file_path) as files:
             reader = csv.reader(files)
             next(reader) # skip header
@@ -59,7 +57,7 @@ class Translator:
         offset = 0
 
         for name, val in var_binds:
-            logger.debug('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
+            logger.debug(f'{name.prettyPrint()} = {val.prettyPrint()}')
 
             # extract oid and value
             oid = name.prettyPrint()
