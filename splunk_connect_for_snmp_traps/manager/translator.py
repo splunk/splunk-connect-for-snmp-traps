@@ -77,7 +77,7 @@ class Translator:
             custom_translated_oid = self.custom_translator(oid)
             custom_translated_value = value
             # tranlate value ONLY when it is oid
-            if valType == 'ObjectName':
+            if valType == 'ObjectIdentifier':         
                 custom_translated_value = self.custom_translator(value)
 
             # Construct trap string
@@ -95,5 +95,3 @@ class Translator:
         logger.debug(f'--- Trap Event String ---')
         logger.debug(trap_event_string)
         return trap_event_string
-
-
