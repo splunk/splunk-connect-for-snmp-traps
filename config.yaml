@@ -13,6 +13,6 @@ hec:
   host: 127.0.0.1
   port: 8088
   endpoint: /services/collector/event
-  authentication_token: 6b5dcda2-6ead-46bf-a03e-6a9f24c8bd30
+  authentication_token: 1f1a82b3-8bfd-43d4-9a20-98fdee4c95b9
 thread-pool:
   max-suggested-working-threads: 10

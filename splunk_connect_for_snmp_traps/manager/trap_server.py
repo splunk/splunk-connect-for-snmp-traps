@@ -46,8 +46,6 @@ class TrapServer:
 
     def post_trap_to_hec(self, variables_binds):
         logger.debug('Task received, sleeping for few seconds ...')
-        from time import sleep
-        sleep(5)
         endpoint = self._hec_config.endpoint()
         headers = {'Authorization': f'Splunk {self._hec_config.get_authentication_token()}'}
         splunk_trap_data = ','.join([str(key) + str(value) for key, value in variables_binds])
