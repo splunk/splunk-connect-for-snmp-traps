@@ -38,10 +38,11 @@ class Translator:
     def custom_translator(self, oid):
         return self._custom_translation_table.get(oid, None)
         
-
+    # TODO Make sure os.getcwd() get the correct path
     # Read the custom mib translation table into memory
     def get_custom_translation_table(self):
         translation_table = {}
+        logger.debug(f'cwd {os.getcwd()}') 
         file_path = os.path.join(os.getcwd(), 'lookups/custom_mib_string_table.csv')
         logger.debug(f'file_path {file_path}')
         with open(file_path) as files:
@@ -62,16 +63,10 @@ class Translator:
             # extract oid and value
             oid = name.prettyPrint()
             value = val.prettyPrint()
-
+           
             # Extrat the types
-            cursor = '->'
-            nameType = name.prettyPrintType()
-            if cursor in nameType:
-                nameType = nameType.split(cursor)[1].strip()
-                
-            valType = val.prettyPrintType()
-            if cursor in valType:
-                valType = valType.split(cursor)[1].strip()
+            nameType = name.__class__.__name__
+            valType = val.__class__.__name__
 
             # custom translation 
             custom_translated_oid = self.custom_translator(oid)
