@@ -10,6 +10,7 @@ python = "^3.8"
 pysnmp = "^4.4.12"
 pyyaml = "^5.3"
 lxml = "^4.6"
+requests = "^2.25.1"
 
 [tool.poetry.dev-dependencies]
 #pytest-splunk-addon = "^1.4.0"
