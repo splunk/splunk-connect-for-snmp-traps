@@ -23,7 +23,7 @@ class TrapServer:
         self._server_config = server_config
         self._snmp_engine = engine.SnmpEngine()
         self.configure_trap_server()
-        self._hec_config = HecConfiguration(self._server_config['hec'])
+        self._hec_config = HecConfiguration()
         self._thread_pool_executor = self.configure_thread_pool()
         self._translator = Translator(server_config)
 
@@ -54,14 +54,12 @@ class TrapServer:
 
     def post_trap_to_hec(self, variables_binds):
         logger.debug('Task received, sleeping for few seconds ...')
-        from time import sleep
-        sleep(5)
-        endpoint = self._hec_config.endpoint()
-        headers = {'Authorization': f'Splunk {self._hec_config.get_authentication_token()}'}
-        data = {'sourcetype': 'trap-server', 'event': variables_binds}
-        logger.debug(f'Posting trap to HEC using {self._hec_config.endpoint()} and headers {headers}')
-        response = requests.post(url=endpoint, json=data, headers=headers, verify=False)
-        logger.debug(f'Response code is {response.status_code}')
+        for endpoint in self._hec_config.get_endpoints():
+            headers = {'Authorization': f'Splunk {self._hec_config.get_authentication_token()}'}
+            data = {'sourcetype': 'trap-server', 'event': variables_binds}
+            logger.debug(f'Posting trap to HEC using {endpoint} and headers {headers}')
+            response = requests.post(url=endpoint, json=data, headers=headers, verify=self._hec_config.is_ssl_enabled())
+            logger.debug(f'Response code is {response.status_code}')
 
     # Register a callback to be invoked at specified execution point of
     # SNMP Engine and passed local variables at code point's local scope
