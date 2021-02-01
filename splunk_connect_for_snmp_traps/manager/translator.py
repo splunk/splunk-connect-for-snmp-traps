@@ -3,6 +3,7 @@ import os
 import json
 import csv
 import logging
+from pysmi import debug as pysmi_debug
 
 logger = logging.getLogger(__name__)
 
@@ -10,22 +11,27 @@ class Translator:
     def __init__(self, server_config):
         self._server_config = server_config
         self._custom_translation_table = self.get_custom_translation_table()
-
-
-    # Translate SNMP PDU varBinds into MIB objects using MIB
-    def mib_translator(self, name, val):
+        self._load_list = server_config['snmp']['mibs']['load_list']
+        self._mib_view_controller = self.build_mib_compiler(self._load_list)
+    
+    def build_mib_compiler(self, load_list):
         # Assemble MIB browser
         snmp_config = self._server_config['snmp']
         mibBuilder = builder.MibBuilder()
         mibViewController = view.MibViewController(mibBuilder)
         compiler.addMibCompiler(mibBuilder, sources=snmp_config['mibs']['url'])
+        
+        for module in self._load_list:
+            mibBuilder.loadModules(module)
 
-        # Pre-load MIB modules we expect to work with
-        mibBuilder.loadModules('SNMPv2-MIB', 'SNMP-COMMUNITY-MIB')
+        return mibViewController
 
+
+    # Translate SNMP PDU varBinds into MIB objects using MIB
+    def mib_translator(self, name, val):
         # Run var-binds through MIB resolver
         try:
-            varBind = rfc1902.ObjectType(rfc1902.ObjectIdentity(name), val).resolveWithMib(mibViewController)
+            varBind = rfc1902.ObjectType(rfc1902.ObjectIdentity(name), val).resolveWithMib(self._mib_view_controller)
             logger.debug(f'* Translated PDU: {varBind.prettyPrint()}')
             return varBind.prettyPrint()
         except Exception as e:
@@ -38,7 +44,6 @@ class Translator:
     def custom_translator(self, oid):
         return self._custom_translation_table.get(oid, None)
         
-    # TODO Make sure os.getcwd() get the correct path
     # Read the custom mib translation table into memory
     def get_custom_translation_table(self):
         translation_table = {}
