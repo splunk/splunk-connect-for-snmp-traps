@@ -1,9 +1,9 @@
 # Splunk Connect for SNMP Traps
 # Sample Configuration file
 snmp:
-  port: 2062
+  port: 2162
   ipv4: True
-  ipv6: False
+  ipv6: True
   communities:
     v1:
       - public
