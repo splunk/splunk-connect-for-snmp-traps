@@ -14,5 +14,5 @@ COPY dist/*.whl /tmp
 COPY config.yaml .
 RUN pip3.8 install $(ls /tmp/*.whl); rm -f /tmp/*.whl
 
-EXPOSE 2062/udp
+EXPOSE 2162/udp
 ENTRYPOINT [ "/work/entrypoint.sh" ]
