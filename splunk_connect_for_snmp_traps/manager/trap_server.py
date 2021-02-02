@@ -1,15 +1,10 @@
-import concurrent.futures
 import logging
 
-import requests
 from pysnmp.carrier.asyncore.dgram import udp, udp6
 from pysnmp.entity import engine, config
 from pysnmp.entity.rfc3413 import ntfrcv
 
-from splunk_connect_for_snmp_traps.manager.hec_config import HecConfiguration
-from splunk_connect_for_snmp_traps.manager.os_config_utils import (
-    max_allowed_working_threads,
-)
+from splunk_connect_for_snmp_traps.manager.hec_sender import HecSender
 from splunk_connect_for_snmp_traps.manager.translator import Translator
 
 from pysnmp.smi import builder, view, compiler, rfc1902
@@ -25,37 +20,19 @@ class TrapServer:
         self._server_config = server_config
         self._snmp_engine = engine.SnmpEngine()
         self.configure_trap_server()
-        self._hec_config = HecConfiguration()
-        self._thread_pool_executor = self.configure_thread_pool()
+        self._hec_sender = HecSender(self._server_config)
         self._translator = Translator(server_config)
 
-    def configure_thread_pool(self):
-        user_suggested_working_threads = self._server_config["thread-pool"][
-            "max-suggested-working-threads"
-        ]
-        max_workers = max_allowed_working_threads(user_suggested_working_threads)
-        logger.debug(f"Configured a thread-pool with {max_workers} concurrent threads")
-        return concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-
     def configure_trap_server(self):
-        self._snmp_engine.observer.registerObserver(
-            self.request_observer,
-            "rfc3412.receiveMessage:request",
-            "rfc3412.returnResponsePdu",
-        )
-        snmp_config = self._server_config["snmp"]
-        if snmp_config["ipv4"]:
-            config.addTransport(
-                self._snmp_engine,
-                udp.domainName,
-                udp.UdpTransport().openServerMode(("127.0.0.1", snmp_config["port"])),
-            )
-        if snmp_config["ipv6"]:
-            config.addTransport(
-                self._snmp_engine,
-                udp6.domainName,
-                udp6.Udp6Transport().openServerMode(("::1", snmp_config["port"])),
-            )
+        self._snmp_engine.observer.registerObserver(self.request_observer, 'rfc3412.receiveMessage:request',
+                                                    'rfc3412.returnResponsePdu')
+        snmp_config = self._server_config['snmp']
+        if snmp_config['ipv4']:
+            config.addTransport(self._snmp_engine, udp.domainName,
+                                udp.UdpTransport().openServerMode(('0.0.0.0', snmp_config['port'])))
+        if snmp_config['ipv6']:
+            config.addTransport(self._snmp_engine, udp6.domainName,
+                                udp6.Udp6Transport().openServerMode(('::0', snmp_config['port'])))
         # SNMPv1/2c setup
         # SecurityName <-> CommunityName mapping
         for community in snmp_config["communities"]["v1"]:
@@ -63,22 +40,6 @@ class TrapServer:
             config.addV1System(self._snmp_engine, community, community)
         # Register SNMP Application at the SNMP engine
         ntfrcv.NotificationReceiver(self._snmp_engine, self.snmp_callback_function)
-
-    def post_trap_to_hec(self, variables_binds):
-        logger.debug("Task received, sleeping for few seconds ...")
-        for endpoint in self._hec_config.get_endpoints():
-            headers = {
-                "Authorization": f"Splunk {self._hec_config.get_authentication_token()}"
-            }
-            data = {"sourcetype": "trap-server", "event": variables_binds}
-            logger.debug(f"Posting trap to HEC using {endpoint} and headers {headers}")
-            response = requests.post(
-                url=endpoint,
-                json=data,
-                headers=headers,
-                verify=self._hec_config.is_ssl_enabled(),
-            )
-            logger.debug(f"Response code is {response.status_code}")
 
     # Register a callback to be invoked at specified execution point of
     # SNMP Engine and passed local variables at code point's local scope
@@ -120,8 +81,7 @@ class TrapServer:
         )
         # Translate the var_binds to MIB objects
         trap_event_string = self._translator.format_trap_event(var_binds)
-
-        self._thread_pool_executor.submit(self.post_trap_to_hec, trap_event_string)
+        self._hec_sender.post_data(trap_event_string)
 
     def run_trap_server(self):
         self._snmp_engine.transportDispatcher.jobStarted(1)
