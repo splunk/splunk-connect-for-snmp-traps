@@ -31,7 +31,7 @@ class IntegrationTest(TestCase):
         time.sleep(2)
 
         # send trap
-        os.system("snmptrap -v 2c -c public localhost:2062 '' 1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 123456")
+        os.system("snmptrap -v 2c -c public localhost:2162 '' 1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 123456")
 
         # wait for the message to be processed
         time.sleep(2)
