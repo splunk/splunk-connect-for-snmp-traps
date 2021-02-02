@@ -66,7 +66,7 @@ class TrapServer:
             splunk_trap_data = ",".join(
                 [str(key) + str(value) for key, value in variables_binds]
             )
-            data = {"sourcetype": "trap-server", "event": splunk_trap_data}
+            data = {"sourcetype": "sc4snmp:trap", "event": splunk_trap_data}
             logger.debug(
                 f"Posting trap to HEC using {endpoint} and tlsmode {self._hec_config.is_ssl_enabled}"
             )
