@@ -67,14 +67,22 @@ class TrapServer:
                 [str(key) + str(value) for key, value in variables_binds]
             )
             data = {"sourcetype": "trap-server", "event": splunk_trap_data}
-            logger.debug(f"Posting trap to HEC using {endpoint} and headers {headers}")
-            response = requests.post(
-                url=endpoint,
-                json=data,
-                headers=headers,
-                verify=self._hec_config.is_ssl_enabled(),
+            logger.debug(
+                f"Posting trap to HEC using {endpoint} and tlsmode {self._hec_config.is_ssl_enabled}"
             )
-            logger.debug(f"Response code is {response.status_code}")
+            try:
+                response = requests.post(
+                    url=endpoint,
+                    json=data,
+                    headers=headers,
+                    verify=self._hec_config.is_ssl_enabled(),
+                )
+                logger.debug(f"Response code is {response.status_code}")
+            except:
+                logger.warning(
+                    f"Exception posting trap to HEC using {endpoint} and tlsmode {self._hec_config.is_ssl_enabled} with headers {headers}",
+                    exc_info=True,
+                )
 
     # Register a callback to be invoked at specified execution point of
     # SNMP Engine and passed local variables at code point's local scope
