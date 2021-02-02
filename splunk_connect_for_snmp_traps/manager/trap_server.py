@@ -28,8 +28,8 @@ class TrapServer:
                                 udp6.Udp6Transport().openServerMode(('::0', snmp_config['port'])))
         # SNMPv1/2c setup
         # SecurityName <-> CommunityName mapping
-        for community in snmp_config['communities']['v1']:
-            logger.info(f'Configuring V1 {community}')
+        for community in snmp_config["communities"]["v1"]:
+            logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
         # Register SNMP Application at the SNMP engine
         ntfrcv.NotificationReceiver(self._snmp_engine, self.snmp_callback_function)
@@ -39,26 +39,35 @@ class TrapServer:
     # noinspection PyUnusedLocal,PyUnusedLocal
     def request_observer(self, snmp_engine, execution_point, variables, callback_ctx):
         logger.debug(f'Raw data is "{variables}"')
-        logger.debug('Execution point: %s' % execution_point)
+        logger.debug("Execution point: %s" % execution_point)
         logger.debug(
-            '* transportDomain: %s'
-            % '.'.join([str(x) for x in variables['transportDomain']])
+            "* transportDomain: %s"
+            % ".".join([str(x) for x in variables["transportDomain"]])
         )
         logger.debug(
-            '* transportAddress: %s'
-            % '@'.join([str(x) for x in variables['transportAddress']])
+            "* transportAddress: %s"
+            % "@".join([str(x) for x in variables["transportAddress"]])
         )
-        logger.debug('* securityModel: %s' % variables['securityModel'])
-        logger.debug('* securityName: %s' % variables['securityName'])
-        logger.debug('* securityLevel: %s' % variables['securityLevel'])
-        logger.debug('* contextEngineId: %s' % variables['contextEngineId'].prettyPrint())
-        logger.debug('* contextName: %s' % variables['contextName'].prettyPrint())
-        logger.debug('* PDU: %s' % variables['pdu'].prettyPrint())
+        logger.debug("* securityModel: %s" % variables["securityModel"])
+        logger.debug("* securityName: %s" % variables["securityName"])
+        logger.debug("* securityLevel: %s" % variables["securityLevel"])
+        logger.debug(
+            "* contextEngineId: %s" % variables["contextEngineId"].prettyPrint()
+        )
+        logger.debug("* contextName: %s" % variables["contextName"].prettyPrint())
+        logger.debug("* PDU: %s" % variables["pdu"].prettyPrint())
 
     # Callback function for receiving notifications
     # noinspection PyUnusedLocal,PyUnusedLocal,PyUnusedLocal
-    def snmp_callback_function(self, snmp_engine, state_reference, context_engine_id, context_name, var_binds,
-                               callback_ctx):
+    def snmp_callback_function(
+        self,
+        snmp_engine,
+        state_reference,
+        context_engine_id,
+        context_name,
+        var_binds,
+        callback_ctx,
+    ):
         logger.debug(
             'Notification from ContextEngineId "%s", ContextName "%s"'
             % (context_engine_id.prettyPrint(), context_name.prettyPrint())
