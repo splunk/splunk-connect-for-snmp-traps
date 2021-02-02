@@ -17,8 +17,8 @@ poetry install
 
 ### Setup Splunk HEC Environment
 ```
-export SPLUNK_HEC_URL=http://10.202.1.138:8088/services/collector/event
-export SPLUNK_HEC_TOKEN=a009ffcb-ddba-4211-8422-3154cca663d5
+export SPLUNK_HEC_URL=http://0.0.0.0:8088/services/collector/event
+export SPLUNK_HEC_TOKEN=<token>
 export SPLUNK_HEC_TLS_VERIFY=False
 ```
 
