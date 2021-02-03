@@ -18,5 +18,3 @@ snmp:
       # - "A10-COMMON-MIB"
       # - "A3COM-HUAWEI-BLG-MIB"
       #- "NET-SNMP-EXAMPLES-MIB"
-thread-pool:
-  max-suggested-working-threads: 10
