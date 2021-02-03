@@ -1,7 +1,5 @@
 FROM registry.access.redhat.com/ubi8/ubi
 
-WORKDIR /work
-
 RUN curl -fsSL https://goss.rocks/install | GOSS_VER=v0.3.13 sh
 
 RUN cd /tmp ;\
@@ -15,4 +13,5 @@ COPY lookups /work/lookups
 RUN pip3.8 install $(ls /tmp/*.whl); rm -f /tmp/*.whl
 
 EXPOSE 2162/udp
+WORKDIR /work
 ENTRYPOINT [ "/work/entrypoint.sh" ]
