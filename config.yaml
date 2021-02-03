@@ -7,14 +7,14 @@ snmp:
       - "my-area"
   mibs:
     url:
-      #- "file:///usr/share/snmp/mibs"
-      # *TODO*: Replace below URL with MIB Server's URL returned during service discovery.
-      - "https://mibs.thola.io/asn1/@mib@"
-      # - "http://localhost:8070/asn1/@mib@"
-    load_list:
+      - "file:///usr/share/snmp/mibs"
+      # *TODO*: Replace below URL with MIB Server's URL returned during service discovery. 
+      - "http://mibs.thola.io/asn1/@mib@"
+    load_list:  
       - "SNMPv2-MIB"
       - "SNMP-COMMUNITY-MIB"
       - "SNMPv2-CONF"
-      # - "A10-COMMON-MIB"
-      # - "A3COM-HUAWEI-BLG-MIB"
-      #- "NET-SNMP-EXAMPLES-MIB"
+      - "NET-SNMP-EXAMPLES-MIB"
+thread-pool:
+  max-suggested-working-threads: 10
+

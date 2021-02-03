@@ -3,7 +3,6 @@ import os
 import json
 import csv
 import logging
-from pysmi import debug as pysmi_debug
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +20,12 @@ class Translator:
         mibViewController = view.MibViewController(mibBuilder)
         compiler.addMibCompiler(mibBuilder, sources=snmp_config["mibs"]["url"])
 
-        for module in self._load_list:
-            mibBuilder.loadModules(module)
+        try:
+            for module in self._load_list:
+                mibBuilder.loadModules(module)
+        except Exception as e:
+            logger.error(f"Error happened during load module: {e}")
+        logger.debug("compiler is loaded")
 
         return mibViewController
 
