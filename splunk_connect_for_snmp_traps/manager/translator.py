@@ -6,6 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class Translator:
     def __init__(self, server_config):
         self._server_config = server_config
@@ -37,7 +38,7 @@ class Translator:
                 rfc1902.ObjectIdentity(name), val
             ).resolveWithMib(self._mib_view_controller)
             logger.debug(f"* Translated PDU: {varBind.prettyPrint()}")
-            return varBind.prettyPrint()
+            return varBind.prettyPrint().replace(" = ", "=")
         except Exception as e:
             logger.error(f"Error happended in translateion: {e}")
         finally:
@@ -84,35 +85,39 @@ class Translator:
 
             # Construct trap string
             offset += 1
-            original_oid = "oid{offset} = {oid}".format(offset=offset, oid=oid)
-            oid_type_string = "oid_type{offset} = {oid_type}".format(
+            original_oid = "{oid}={value}".format(offset=offset, oid=oid, value=value)
+            oid_type_string = "oid-type{offset}={oid_type}".format(
                 offset=offset, oid_type=nameType
             )
-            original_value = "value{offset} = {value}".format(
-                offset=offset, value=value
-            )
-            val_type_string = "val_type{offset} = {val_type}".format(
+            translated_mib_string = self.mib_translator(name, val)
+
+            if custom_translated_oid:
+                custom_translated_mib_string = (
+                    "{custom_translated_oid}={custom_translated_value}".format(
+                        offset=offset,
+                        custom_translated_oid=custom_translated_oid,
+                        custom_translated_value=custom_translated_value,
+                    )
+                )
+            else:
+                custom_translated_oid = ""
+
+            original_value = "value{offset}={value}".format(offset=offset, value=value)
+            val_type_string = "value{offset}-type={val_type}".format(
                 offset=offset, val_type=valType
             )
-            translated_mib_string = "mib{offset} = {mib}".format(
-                offset=offset, mib=self.mib_translator(name, val)
-            )
-            custom_translated_mib_string = "custom_mib{offset} = {custom_translated_oid} = {custom_translated_value}".format(
-                offset=offset,
-                custom_translated_oid=custom_translated_oid,
-                custom_translated_value=custom_translated_value,
-            )
-            trap_event_string += "\n".join(
+            trap_event_string += " ".join(
                 [
-                    original_oid,
                     oid_type_string,
-                    original_value,
                     val_type_string,
+                    original_oid,
+                    original_value,
                     translated_mib_string,
                     custom_translated_mib_string,
+                    #
                 ]
             )
-            trap_event_string += "\n\n"
+            trap_event_string += "\n"
 
         trap_event_string = trap_event_string.rstrip("\n")  # remove trailing newline
         logger.debug(f"--- Trap Event String ---")

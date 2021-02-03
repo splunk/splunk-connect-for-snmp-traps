@@ -11,6 +11,7 @@ from pysnmp.smi import builder, view, compiler, rfc1902
 import os
 import json
 import csv
+import socket
 
 logger = logging.getLogger(__name__)
 
@@ -89,9 +90,27 @@ class TrapServer:
             'Notification from ContextEngineId "%s", ContextName "%s"'
             % (context_engine_id.prettyPrint(), context_name.prettyPrint())
         )
-        # Translate the var_binds to MIB objects
+        device_ip = snmp_engine.msgAndPduDsp.getTransportInfo(state_reference)[1][0]
+        header = {}
+        try:
+            hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(device_ip)
+            parts = str(hostname).split(".")
+            name = parts[0]
+            # print(name)
+            if len(parts) > 1:
+                header["Agent_Hostname"] = name
+                logger.debug(f"host={header['Agent_Hostname']} device_ip={device_ip}")
+            else:
+                header["Agent_Hostname"] = device_ip
+                logger.debug(f"device_ip={device_ip}")
+        except:
+            logger.debug(f"device_ip={device_ip}")
+            header["Agent_Hostname"] = device_ip
+            pass
+
+        header["Agent_Address"] = device_ip
         trap_event_string = self._translator.format_trap_event(var_binds)
-        self._hec_sender.post_data(trap_event_string)
+        self._hec_sender.post_data(header["Agent_Hostname"], trap_event_string)
 
     def run_trap_server(self):
         self._snmp_engine.transportDispatcher.jobStarted(1)

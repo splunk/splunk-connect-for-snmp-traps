@@ -31,12 +31,13 @@ class HecSender:
             self._thread_local.session = requests.Session()
         return self._thread_local.session
 
-    def post_data_to_thread_pool(self, variables_binds):
+    def post_data_to_thread_pool(self, host, variables_binds):
         headers = {
             "Authorization": f"Splunk {self._hec_config.get_authentication_token()}"
         }
         data = {
             "sourcetype": "sc4snmp:traps",
+            "host": host,
             "index": self._args.index,
             "event": variables_binds,
         }
@@ -50,7 +51,7 @@ class HecSender:
         except requests.ConnectionError as e:
             logger.error(f"Connection error when sending data to HEC: {e}")
 
-    def post_data(self, variables_binds):
+    def post_data(self, host, variables_binds):
         self._thread_pool_executor.submit(
-            self.post_data_to_thread_pool, variables_binds
+            self.post_data_to_thread_pool, host, variables_binds
         )
