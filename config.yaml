@@ -1,9 +1,6 @@
 # Splunk Connect for SNMP Traps
 # Sample Configuration file
 snmp:
-  port: 2162
-  ipv4: True
-  ipv6: True
   communities:
     v1:
       - public
@@ -11,10 +8,10 @@ snmp:
   mibs:
     url:
       #- "file:///usr/share/snmp/mibs"
-      # *TODO*: Replace below URL with MIB Server's URL returned during service discovery. 
+      # *TODO*: Replace below URL with MIB Server's URL returned during service discovery.
       - "https://mibs.thola.io/asn1/@mib@"
       # - "http://localhost:8070/asn1/@mib@"
-    load_list:  
+    load_list:
       - "SNMPv2-MIB"
       - "SNMP-COMMUNITY-MIB"
       - "SNMPv2-CONF"

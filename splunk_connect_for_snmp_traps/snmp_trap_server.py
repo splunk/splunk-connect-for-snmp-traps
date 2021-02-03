@@ -18,6 +18,18 @@ def main():
         default="info",
         help="Provide logging level. Example --loglevel debug, default=warning",
     )
+    parser.add_argument(
+        "-p", "--port", default=2162, help="Port to accept connections on", type=int
+    )
+    parser.add_argument(
+        "--ipv4", default=True, help="accept connections on ipv4", type=bool
+    )
+    parser.add_argument(
+        "--ipv6", default=True, help="accept connections on ipv6", type=bool
+    )
+    parser.add_argument(
+        "--hec_threads", default=10, help="Max http worker thread count", type=int
+    )
     parser.add_argument("-c", "--config", default="config.yaml", help="Config File")
     args = parser.parse_args()
 
@@ -34,7 +46,7 @@ def main():
         server_config = yaml.load(yamlfile, Loader=yaml.FullLoader)
 
     logger.debug(f"Server Config is:  {server_config}")
-    trap_server = TrapServer(server_config)
+    trap_server = TrapServer(args, server_config)
     trap_server.run_trap_server()
 
 
