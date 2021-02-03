@@ -35,7 +35,7 @@ class HecSender:
         headers = {
             "Authorization": f"Splunk {self._hec_config.get_authentication_token()}"
         }
-        data = {"sourcetype": "trap-server", "event": variables_binds}
+        data = {"sourcetype": "sc4snmp:traps", "event": variables_binds}
         try:
             session = self.get_session()
             for endpoint in self._hec_config.get_endpoints():
