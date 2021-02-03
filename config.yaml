@@ -10,7 +10,7 @@ snmp:
       - "my-area"
   mibs:
     url:
-      # - "file:///usr/share/snmp/mibs"
+      - "file:///usr/share/snmp/mibs"
       # *TODO*: Replace below URL with MIB Server's URL returned during service discovery. 
       - "http://mibs.thola.io/asn1/@mib@"
     load_list:  
