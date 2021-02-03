@@ -9,11 +9,11 @@ We use SNMP library for Python under the BSD 2 Clause License https://github.com
 ## Development Steps (For Internal Tests)
 
 ### Install Poetry
-pip3 install poetry
+`pip3 install poetry`
 
 ### Install deps
 
-poetry install
+`poetry install`
 
 ### Setup Splunk HEC Environment
 ```
@@ -23,7 +23,7 @@ export SPLUNK_HEC_TLS_VERIFY=False
 ```
 
 ### Run Trap Server
-poetry run sc4snmp-traps -l debug
+`poetry run sc4snmp-traps -l debug`
 
 
 ### Send Sample Traps

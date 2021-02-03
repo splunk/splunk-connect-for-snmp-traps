@@ -16,23 +16,33 @@ logger = logging.getLogger(__name__)
 
 
 class TrapServer:
-    def __init__(self, server_config):
+    def __init__(self, args, server_config):
+        self._args = args
         self._server_config = server_config
         self._snmp_engine = engine.SnmpEngine()
         self.configure_trap_server()
-        self._hec_sender = HecSender(self._server_config)
+        self._hec_sender = HecSender(args, self._server_config)
         self._translator = Translator(server_config)
 
     def configure_trap_server(self):
-        self._snmp_engine.observer.registerObserver(self.request_observer, 'rfc3412.receiveMessage:request',
-                                                    'rfc3412.returnResponsePdu')
-        snmp_config = self._server_config['snmp']
-        if snmp_config['ipv4']:
-            config.addTransport(self._snmp_engine, udp.domainName,
-                                udp.UdpTransport().openServerMode(('0.0.0.0', snmp_config['port'])))
-        if snmp_config['ipv6']:
-            config.addTransport(self._snmp_engine, udp6.domainName,
-                                udp6.Udp6Transport().openServerMode(('::0', snmp_config['port'])))
+        self._snmp_engine.observer.registerObserver(
+            self.request_observer,
+            "rfc3412.receiveMessage:request",
+            "rfc3412.returnResponsePdu",
+        )
+        snmp_config = self._server_config["snmp"]
+        if self._args.ipv4:
+            config.addTransport(
+                self._snmp_engine,
+                udp.domainName,
+                udp.UdpTransport().openServerMode(("0.0.0.0", self._args.port)),
+            )
+        if self._args.ipv6:
+            config.addTransport(
+                self._snmp_engine,
+                udp6.domainName,
+                udp6.Udp6Transport().openServerMode(("::0", self._args.port)),
+            )
         # SNMPv1/2c setup
         # SecurityName <-> CommunityName mapping
         for community in snmp_config["communities"]["v1"]:

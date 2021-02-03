@@ -13,16 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class HecSender:
-    def __init__(self, server_config):
+    def __init__(self, args, server_config):
+        self._args = args
         self._server_config = server_config
         self._hec_config = HecConfiguration()
         self._thread_local = threading.local()
         self._thread_pool_executor = self.configure_thread_pool()
 
     def configure_thread_pool(self):
-        user_suggested_working_threads = self._server_config["thread-pool"][
-            "max-suggested-working-threads"
-        ]
+        user_suggested_working_threads = self._args.hec_threads
         max_workers = max_allowed_working_threads(user_suggested_working_threads)
         logger.debug(f"Configured a thread-pool with {max_workers} concurrent threads")
         return concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
