@@ -9,7 +9,7 @@ from splunk_connect_for_snmp_traps.utilities import initialize_signals_handler
 logger = logging.getLogger(__name__)
 
 
-def main():
+def parse_arguments(cmd_args=None):
     logger.info(f"Startup Config")
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -34,16 +34,20 @@ def main():
 
     parser.add_argument("-i", "--index", default="netops", help="Index for traps")
 
-    args = parser.parse_args()
+    args = parser.parse_args(cmd_args)
 
     log_level = args.loglevel.upper()
-    config_file = args.config
 
     logging.getLogger().setLevel(log_level)
     logger.info(f"Log Level is {log_level}")
-    logger.info(f"Config file is {config_file}")
-
     logger.info("Completed Argument parsing")
+    return args
+
+
+def main():
+    args = parse_arguments()
+    config_file = args.config
+    logger.info(f"Config file is {config_file}")
 
     with open(config_file, "r") as yamlfile:
         server_config = yaml.load(yamlfile, Loader=yaml.FullLoader)
