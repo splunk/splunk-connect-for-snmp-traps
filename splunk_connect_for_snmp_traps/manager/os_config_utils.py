@@ -6,4 +6,8 @@ from multiprocessing import cpu_count
 # make sense.
 def max_allowed_working_threads(suggested_user_value):
     total_cpu_cores = cpu_count()
-    return suggested_user_value if suggested_user_value < total_cpu_cores else total_cpu_cores
+    return (
+        suggested_user_value
+        if suggested_user_value < total_cpu_cores
+        else total_cpu_cores
+    )
