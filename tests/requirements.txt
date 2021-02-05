@@ -14,6 +14,8 @@ jinja2-time
 splunk-sdk
 flake8
 pytz
+pyyaml
+pysnmp
 flaky
 lovely-pytest-docker
 pathlib2
