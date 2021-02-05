@@ -10,11 +10,7 @@ snmp:
       - "file:///usr/share/snmp/mibs"
       # *TODO*: Replace below URL with MIB Server's URL returned during service discovery. 
       - "http://mibs.thola.io/asn1/@mib@"
-    load_list:  
-      - "SNMPv2-MIB"
-      - "SNMP-COMMUNITY-MIB"
-      - "SNMPv2-CONF"
-      - "NET-SNMP-EXAMPLES-MIB"
+    load_list: "lookups/sample_mibs_list.csv"
 thread-pool:
   max-suggested-working-threads: 10
 
