@@ -1,6 +1,4 @@
-import threading
 import time
-from _pytest.junitxml import record_property
 
 from pysnmp.hlapi import *
 
@@ -34,14 +32,8 @@ def send_trap(host, port, object_identity, *var_binds):
         print(errorIndication)
 
 
-def test_integration(setup_splunk):
-    th = threading.Thread(target=start_snmp_server)
-    th.setDaemon(True)
-    th.start()
-
-    # wait for the server to start
+def test_integration(setup_splunk, setup_sc4snmp_trap):
     time.sleep(2)
-
     # send trap
     varbind1 = ('1.3.6.1.6.3.1.1.4.3.0', '1.3.6.1.4.1.20408.4.1.1.2')
     varbind2 = ('1.3.6.1.2.1.1.1.0', OctetString('my system'))
@@ -50,7 +42,7 @@ def test_integration(setup_splunk):
     # wait for the message to be processed
     time.sleep(2)
 
-    search_query = """search index="netops" sourcetype="sc4snmp:traps"
+    search_query = """search index="main" sourcetype="sc4snmp:traps"
                      "SNMPv2-MIB::sysUpTime.0=0" "SNMPv2-MIB::snmpTrapOID.0=SNMPv2-MIB::warmStart" 
                      "SNMP-COMMUNITY-MIB::snmpTrapAddress.0=0.0.0.0" 
                      "SNMP-COMMUNITY-MIB::snmpTrapCommunity.0=public" 
@@ -60,4 +52,3 @@ def test_integration(setup_splunk):
     result_count, event_count = splunk_single(setup_splunk, search_query)
 
     assert result_count == 1
-

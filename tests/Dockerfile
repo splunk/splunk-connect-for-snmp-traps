@@ -6,18 +6,15 @@
 #
 #You should have received a copy of the CC0 legalcode along with this
 #work.  If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
-FROM python:3.7
+FROM python:3.8
 
-COPY requirements.txt /
+COPY tests/requirements.txt /
 RUN pip3 install -r /requirements.txt
 RUN pip3 install pytest-xdist
-RUN mkdir -p /work/tests
-RUN mkdir -p /work/test-results/functional
-COPY entrypoint.sh /
-COPY wait-for /bin/
-COPY ./* /work/tests/
-COPY pytest-ci.ini /work/pytest.ini
-COPY ./data /work/tests/data
-#WORKDIR /work
+COPY tests/entrypoint.sh /
+COPY tests/pytest-ci.ini /
+COPY splunk_connect_for_snmp_traps/ /splunk_connect_for_snmp_traps/
+COPY config.yaml /
+COPY lookups/ /lookups/
 CMD /entrypoint.sh
 

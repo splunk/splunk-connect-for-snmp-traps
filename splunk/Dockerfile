@@ -1,0 +1,2 @@
+ARG SPLUNK_VERSION=latest
+FROM splunk/splunk:$SPLUNK_VERSION
