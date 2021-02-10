@@ -16,6 +16,8 @@ class Translator:
         self._custom_translation_table = self.get_custom_translation_table()
         self._load_list = server_config["snmp"]["mibs"]["load_list"]
         self._mib_view_controller = self.build_mib_compiler(self._load_list)
+        # Execute the 1st translation to force mibs to be ready to use
+        self.first_mib_translation_trigger()
 
     def build_mib_compiler(self, load_list):
         # Assemble MIB browser
@@ -23,6 +25,12 @@ class Translator:
         mibBuilder = builder.MibBuilder()
         mibViewController = view.MibViewController(mibBuilder)
         compiler.addMibCompiler(mibBuilder, sources=snmp_config["mibs"]["url"])
+
+        # Optionally set an alternative path to compiled MIBs
+        logger.debug('Setting MIB sources...')
+        mibBuilder.addMibSources(builder.DirMibSource(snmp_config["mibs"]["dir"]))
+        logger.debug(mibBuilder.getMibSources())
+        logger.debug('done')
 
         mib_file_path = os.path.join(os.getcwd(), self._load_list)
         logger.debug(f"mib_file_path {mib_file_path}")
@@ -42,6 +50,18 @@ class Translator:
         logger.debug("compiler is loaded")
 
         return mibViewController
+    
+    def first_mib_translation_trigger(self):
+        # This is a test TRAP PDU
+        var_binds = [
+            ('1.3.6.1.2.1.1.3.0', 12345),
+            ('1.3.6.1.6.3.1.1.4.1.0', '1.3.6.1.6.3.1.1.5.2')
+        ]
+
+        for name, val in var_binds:
+            self.mib_translator(name, val)
+        logger.debug("mib_translator is ready to use!")
+        
 
     # Translate SNMP PDU varBinds into MIB objects using MIB
     def mib_translator(self, name, val):
@@ -53,7 +73,7 @@ class Translator:
             logger.debug(f"* Translated PDU: {varBind.prettyPrint()}")
             return varBind.prettyPrint().replace(" = ", "=")
         except Exception as e:
-            logger.error(f"Error happended in translateion: {e}")
+            logger.error(f"Error happended in translation: {e}")
         finally:
             pass
 
