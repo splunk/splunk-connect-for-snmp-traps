@@ -3,6 +3,8 @@ import os
 import json
 import csv
 import logging
+import sys
+import subprocess
 
 from pysmi import debug as pysmi_debug
 pysmi_debug.setLogger(pysmi_debug.Debug('compiler'))
@@ -15,7 +17,7 @@ class Translator:
         self._server_config = server_config
         self._custom_translation_table = self.get_custom_translation_table()
         self._load_list = server_config["snmp"]["mibs"]["load_list"]
-        self._mib_view_controller = self.build_mib_compiler(self._load_list)
+        self._mib_builder, self._mib_view_controller = self.build_mib_compiler(self._load_list)
         # Execute the 1st translation to force mibs to be ready to use
         self.first_mib_translation_trigger()
 
@@ -49,7 +51,7 @@ class Translator:
        
         logger.debug("compiler is loaded")
 
-        return mibViewController
+        return mibBuilder, mibViewController
     
     def first_mib_translation_trigger(self):
         # This is a test TRAP PDU
@@ -61,25 +63,91 @@ class Translator:
         for name, val in var_binds:
             self.mib_translator(name, val)
         logger.debug("mib_translator is ready to use!")
-        
+
+    
+    # Check if the oid was translated properly
+    def is_not_translated(self, org_val, trans_val):
+        # if translated value equals to original value, it was not translated at all
+        if org_val == trans_val:
+            return True
+        temp = trans_val.split(".")
+        logger.debug(f"temp: {temp}")
+        # if the second last number of the oid is numeric, it was not translated properly
+        return len(temp) >= 2 and temp[-2].isnumeric()
+
+    # Find mib module based on the oid
+    def find_mib_file(self, oid):
+        snmp_config = self._server_config["snmp"]
+        value_tuple='"'+str(oid).replace(".",", ")+'"'
+        try:
+            val_direct_output = subprocess.check_output("grep -rl {value} {path}".format(value=value_tuple, path=snmp_config["mibs"]["dir"]), shell=True)
+        except Exception as e:
+            logger.debug(f"Cannot find the oid: {e}")
+            # TODO : write the oid to mongo
+            return
+
+        logger.debug(f"val_direct_output: {val_direct_output}")
+        mib_name =str(val_direct_output, 'utf-8').split("/")[-1].strip()[:-3]
+        logger.debug(f"mib_name: {mib_name}")
+        self.load_extra_mib(mib_name)
+
+
+    # Load additional mib module
+    def load_extra_mib(self, mib_module):
+        try:
+            self._mib_builder.loadModules(mib_module)
+            logger.debug(f"[-] Loaded module: {mib_module}")
+        except Exception as e:
+            logger.error(f"Error happened during load module: {e}")
+            pass
+
 
     # Translate SNMP PDU varBinds into MIB objects using MIB
     def mib_translator(self, name, val):
+        
         # Run var-binds through MIB resolver
         try:
             varBind = rfc1902.ObjectType(
                 rfc1902.ObjectIdentity(name), val
             ).resolveWithMib(self._mib_view_controller)
             logger.debug(f"* Translated PDU: {varBind.prettyPrint()}")
+            trans_string = varBind.prettyPrint().replace(" = ", "=")
+            trans_oid = trans_string.split("=")[0]
+            trans_val = trans_string.split("=")[1]
+            valType = val.__class__.__name__
+
+            # TODO check if the OIDs inside mongo, if it is, skip the following steps
+            
+            try:
+                # Check if oid was translated properly
+                if self.is_not_translated(name, trans_oid):
+                    self.find_mib_file(name)
+              
+                # Check if value was translated properly if value is OID type
+                if valType == "ObjectIdentifier":
+                    if self.is_not_translated(val, trans_val):
+                        self.find_mib_file(val)
+
+                # Re-translated with the extra mibs   
+                varBind = rfc1902.ObjectType(
+                        rfc1902.ObjectIdentity(name), val
+                    ).resolveWithMib(self._mib_view_controller)
+                logger.debug(f"* Re-Translated PDU: {varBind.prettyPrint()}")
+            except Exception as e:
+                logger.debug(f"Error happended during translation checking: {e}")
+                pass               
+          
             return varBind.prettyPrint().replace(" = ", "=")
         except Exception as e:
             logger.error(f"Error happended in translation: {e}")
         finally:
             pass
 
+
     # Translate SNMP PDU varBinds into MIB objects using custom translation table
     def custom_translator(self, oid):
         return self._custom_translation_table.get(oid, None)
+
 
     # Read the custom mib translation table into memory
     def get_custom_translation_table(self):
