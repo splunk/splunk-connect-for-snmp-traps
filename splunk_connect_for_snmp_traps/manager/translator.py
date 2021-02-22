@@ -5,6 +5,9 @@ import csv
 import logging
 import sys
 import subprocess
+import requests
+
+from splunk_connect_for_snmp_traps.mongo import OidsRepository
 
 from pysmi import debug as pysmi_debug
 pysmi_debug.setLogger(pysmi_debug.Debug('compiler'))
@@ -19,7 +22,13 @@ class Translator:
         self._load_list = server_config["snmp"]["mibs"]["load_list"]
         self._mib_builder, self._mib_view_controller = self.build_mib_compiler(self._load_list)
         # Execute the 1st translation to force mibs to be ready to use
+        self._mongo = self.build_mongo_collection(server_config["mongo"])
         self.first_mib_translation_trigger()
+        
+    # build a mongo client 
+    def build_mongo_collection(self, mongo_config):
+        mongo = OidsRepository(mongo_config)
+        return mongo
 
     def build_mib_compiler(self, load_list):
         # Assemble MIB browser
@@ -74,32 +83,70 @@ class Translator:
         logger.debug(f"temp: {temp}")
         # if the second last number of the oid is numeric, it was not translated properly
         return len(temp) >= 2 and temp[-2].isnumeric()
+    
+    def write_mib_to_load_list(self, mib_name):
+        mib_file_path = os.path.join(os.getcwd(), self._load_list)
+        logger.debug(f"mib_file_path: {mib_file_path}")
+        try:
+            with open(mib_file_path, 'a') as mib_list_file:
+                writer = csv.writer(mib_list_file)
+                writer.writerow([mib_name])
+                logger.debug(f"[-] Wrote {mib_name} to mib list")
+            mib_list_file.close()
+        except Exception as e:
+            logger.error(f"Error happened during write the mib into mib load list file: {e}")
 
     # Find mib module based on the oid
     def find_mib_file(self, oid):
         snmp_config = self._server_config["snmp"]
         value_tuple='"'+str(oid).replace(".",", ")+'"'
         try:
+            # TODO relace the grep with Flask server API call
             val_direct_output = subprocess.check_output("grep -rl {value} {path}".format(value=value_tuple, path=snmp_config["mibs"]["dir"]), shell=True)
         except Exception as e:
-            logger.debug(f"Cannot find the oid: {e}")
-            # TODO : write the oid to mongo
+            logger.warn(f"Can NOT find the mib file for the oid-{oid}: {e}")
+            logger.debug(f"Writing the oid-{oid} into mongo")
+            try:
+                self._mongo.add_oid(str(oid))
+                logger.debug(f"[-] The oid - {oid} was added into mongo")
+            except Exception as e:
+                logger.error(f"Error happened during add the oid - {oid} into mongo: {e}")
             return
 
         logger.debug(f"val_direct_output: {val_direct_output}")
         mib_name =str(val_direct_output, 'utf-8').split("/")[-1].strip()[:-3]
-        logger.debug(f"mib_name: {mib_name}")
-        self.load_extra_mib(mib_name)
 
+        # load the mib module 
+        self.load_extra_mib(mib_name, oid)
 
     # Load additional mib module
-    def load_extra_mib(self, mib_module):
+    def load_extra_mib(self, mib_module, oid):
         try:
             self._mib_builder.loadModules(mib_module)
             logger.debug(f"[-] Loaded module: {mib_module}")
+            # add this mib module into mibs_list.csv if it was successfully loaded
+            self.write_mib_to_load_list(mib_module)
         except Exception as e:
-            logger.error(f"Error happened during load module: {e}")
+            logger.warn(f"Error happened during load mib module - {mib_module} for oid - {oid} : {e}")
+            logger.debug(f"Writing the oid-{oid} into mongo")
+            try:
+                self._mongo.add_oid(str(oid))
+                logger.debug(f"[-] The oid - {oid} was added into mongo")
+            except Exception as e:
+                logger.error(f"Error happened during add the oid - {oid} into mongo: {e}")
             pass
+    
+    # Check if the oid is already in the mongodb
+    def check_mongo(self, oid):
+        # TODO remove #119-121 later
+        try:
+            result = self._mongo.contains_oid(str(oid))
+            # if the oid was found in mongo, then the oid is verified that there is not mapping mib module for it
+            no_mapping_mib = True if result != 0 else False
+        except Exception as e:
+            logger.error(f"Error happend when finding oid in mongo: {e}")
+        
+        return no_mapping_mib
 
 
     # Translate SNMP PDU varBinds into MIB objects using MIB
@@ -115,17 +162,19 @@ class Translator:
             trans_oid = trans_string.split("=")[0]
             trans_val = trans_string.split("=")[1]
             valType = val.__class__.__name__
-
-            # TODO check if the OIDs inside mongo, if it is, skip the following steps
             
             try:
-                # Check if oid was translated properly
-                if self.is_not_translated(name, trans_oid):
+                # Check if oid exists in mongo and if oid was translated properly
+                no_mapping_mib_oid = self.check_mongo(name)
+                logger.debug(f"no_mapping_mib_oid: {no_mapping_mib_oid}")
+                if not no_mapping_mib_oid and self.is_not_translated(name, trans_oid):
                     self.find_mib_file(name)
-              
-                # Check if value was translated properly if value is OID type
+
+                # Check if value exists in mongo and if value was translated properly when value is OID type
                 if valType == "ObjectIdentifier":
-                    if self.is_not_translated(val, trans_val):
+                    no_mapping_mib_val = self.check_mongo(val)
+                    logger.debug(f"no_mapping_mib_val: {no_mapping_mib_val}")
+                    if not no_mapping_mib_val and self.is_not_translated(val, trans_val):
                         self.find_mib_file(val)
 
                 # Re-translated with the extra mibs   
@@ -133,6 +182,7 @@ class Translator:
                         rfc1902.ObjectIdentity(name), val
                     ).resolveWithMib(self._mib_view_controller)
                 logger.debug(f"* Re-Translated PDU: {varBind.prettyPrint()}")
+
             except Exception as e:
                 logger.debug(f"Error happended during translation checking: {e}")
                 pass               
