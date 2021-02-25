@@ -5,19 +5,9 @@ snmp:
     v1:
       - public
       - "my-area"
-  mibs:
-    url:
-      - "file:///usr/share/snmp/mibs"
-      # *TODO*: Replace below URL with MIB Server's URL returned during service discovery. 
-      - "http://mibs.thola.io/pysnmp/@mib@"
-    dir: "/work/mibs"
-    # dir: "/Users/yling/snmp-project/splunk-connect-for-snmp-traps/mibs"
-    # dir: "http://mibs.thola.io/pysnmp/"
-    load_list: "lookups/mibs_list.csv"
+  mib-server:
+    # This is need to be mapped with k8s
+    url: "http://mib-server:5000"
+    # url: "http://localhost:5000"
 thread-pool:
   max-suggested-working-threads: 10
-mongo:
-  host: "mongo"
-  port: 27017
-  database: "snmp_traps"
-  collection: "oids"

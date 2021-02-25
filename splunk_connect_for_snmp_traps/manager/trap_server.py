@@ -5,12 +5,7 @@ from pysnmp.entity import engine, config
 from pysnmp.entity.rfc3413 import ntfrcv
 
 from splunk_connect_for_snmp_traps.manager.hec_sender import HecSender
-from splunk_connect_for_snmp_traps.manager.translator import Translator
-
-from pysnmp.smi import builder, view, compiler, rfc1902
-import os
-import json
-import csv
+from splunk_connect_for_snmp_traps.manager.mib_server_client import get_translation
 import socket
 
 logger = logging.getLogger(__name__)
@@ -23,7 +18,6 @@ class TrapServer:
         self._snmp_engine = engine.SnmpEngine()
         self.configure_trap_server()
         self._hec_sender = HecSender(args, self._server_config)
-        self._translator = Translator(server_config)
 
     def configure_trap_server(self):
         self._snmp_engine.observer.registerObserver(
@@ -109,7 +103,11 @@ class TrapServer:
             pass
 
         header["Agent_Address"] = device_ip
-        trap_event_string = self._translator.format_trap_event(var_binds)
+
+        # Send API call to SNMP MIB server to get var_binds translated
+        mib_server_url = self._server_config["snmp"]["mib-server"]["url"]
+        trap_event_string = get_translation(var_binds, mib_server_url)
+        
         self._hec_sender.post_data(header["Agent_Hostname"], trap_event_string)
 
     def run_trap_server(self):
