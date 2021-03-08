@@ -2,8 +2,11 @@ import logging
 import json
 import requests
 import os
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 logger = logging.getLogger(__name__)
+
 
 def get_translation(var_binds, mib_server_url):
     """
@@ -16,14 +19,16 @@ def get_translation(var_binds, mib_server_url):
     var_binds_list = []
     for name, val in var_binds:
         var_bind = {
-            "oid": name.prettyPrint(),
+            "oid": str(name),
             "oid_type": name.__class__.__name__,
-            "val": val.prettyPrint(),
+            "val": str(val),
             "val_type": val.__class__.__name__
         }
         var_binds_list.append(var_bind)
     payload["var_binds"] = var_binds_list
     payload = json.dumps(payload)
+    
+    trap_event_string = payload
 
     # Send the POST request to mib server
     headers = {'Content-type': 'application/json'}
@@ -32,11 +37,25 @@ def get_translation(var_binds, mib_server_url):
     logger.debug(f"[-] TRANSLATION_URL: {TRANSLATION_URL}")
 
     try:
-        resp = requests.request("POST", TRANSLATION_URL, headers=headers, data=payload)
+        # resp = requests.request("POST", TRANSLATION_URL, headers=headers, data=payload)
+        # use Session with Retry
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor = 1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            method_whitelist=["GET", "POST"]
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session = requests.Session()
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        resp = session.post(TRANSLATION_URL, headers=headers, data=payload)
+        # If varBinds gets translated, overide it with the translated one
+        if resp.status_code == 200: 
+            trap_event_string = resp.text
+        if resp.status_code != 200:
+            logger.error(f"[-] Mib Server API Error with code: {resp.status_code}")
     except Exception as e:
-        logger.error(f"Error happened during talk to MIB server to do the Translation: {e}")
-    if resp.status_code != 200:
-        logger.error(f"[-] Mib Server API Error with code: {resp.status_code}")
-    trap_event_string = resp.text
+        logger.error(f"MIB server is unreachable! Error happened while communicating to MIB server to perform the Translation: {e}")
+        
     return trap_event_string
-    
