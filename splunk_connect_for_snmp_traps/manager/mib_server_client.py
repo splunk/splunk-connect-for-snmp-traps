@@ -17,6 +17,7 @@ def get_translation(var_binds, mib_server_url):
     # Construct the payload
     payload = {}
     var_binds_list = []
+    trap_event_string = ""
     for name, val in var_binds:
         var_bind = {
             "oid": str(name),
@@ -25,10 +26,12 @@ def get_translation(var_binds, mib_server_url):
             "val_type": val.__class__.__name__
         }
         var_binds_list.append(var_bind)
+        org_var_bind = '{oid}="{value}"'.format(oid=str(name), value=str(val))
+        trap_event_string += " " + org_var_bind
     payload["var_binds"] = var_binds_list
     payload = json.dumps(payload)
     
-    trap_event_string = payload
+    # trap_event_string = payload
 
     # Send the POST request to mib server
     headers = {'Content-type': 'application/json'}
