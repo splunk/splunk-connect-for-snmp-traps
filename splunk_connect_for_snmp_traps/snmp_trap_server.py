@@ -32,6 +32,7 @@ def main():
     )
     parser.add_argument("-c", "--config", default="config.yaml", help="Config File")
 
+    # TODO discuss if we need to move this into config.yaml 
     parser.add_argument("-i", "--index", default="netops", help="Index for traps")
 
     args = parser.parse_args()
