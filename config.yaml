@@ -11,3 +11,5 @@ snmp:
     # url: "http://localhost:5000"
 thread-pool:
   max-suggested-working-threads: 10
+splunk:
+  index: snmp
