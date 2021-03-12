@@ -20,10 +20,15 @@ We use SNMP library for Python under the BSD 2 Clause License https://github.com
 export SPLUNK_HEC_URL=http://0.0.0.0:8088/services/collector/event
 export SPLUNK_HEC_TOKEN=<token>
 export SPLUNK_HEC_TLS_VERIFY=False
+export MIBS_SERVER_URL=<mib-server-url>
 ```
 
 ### Run Trap Server
 `poetry run sc4snmp-traps -l debug`
+
+**Note**: The default index for traps is `netops`. You can use `-i` option to specify the index where you want traps to be sent to.
+
+`poetry run sc4snmp-traps -l debug -i <index_name>`
 
 
 ### Send Sample Traps
@@ -36,26 +41,9 @@ sudo snmptrap -v 2c -c public 0.0.0.0:2162 '' 1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4
 #### Sample Output in Splunk
 
 ```js
-oid1 = 1.3.6.1.2.1.1.3.0
-oid_type1 = ObjectName
-value1 = 65521705
-val_type1 = TimeTicks
-mib1 = SNMPv2-MIB::sysUpTime.0 = 65521705
-custom_mib1 = 正常运行时间 = 65521705
-
-oid2 = 1.3.6.1.6.3.1.1.4.1.0
-oid_type2 = ObjectName
-value2 = 1.3.6.1.4.1.8072.2.3.0.1
-val_type2 = ObjectIdentifier
-mib2 = SNMPv2-MIB::snmpTrapOID.0 = NET-SNMP-EXAMPLES-MIB::netSnmpExampleHeartbeatNotification
-custom_mib2 =  trap 陷阱 =  NET-SNMP-EXAMPLES-MIB::netSnmpExampleHeartbeatNotification
-
-oid3 = 1.3.6.1.4.1.8072.2.3.2.1
-oid_type3 = ObjectName
-value3 = 123
-val_type3 = Integer
-mib3 = NET-SNMP-EXAMPLES-MIB::netSnmpExampleHeartbeatRate = 123
-custom_mib3 =  NET-SNMP-EXAMPLES-MIB::netSnmpExampleHeartbeatRate = 123
+oid-type1="ObjectName" value1-type="TimeTicks" 1.3.6.1.2.1.1.3.0="123" value1="123" SNMPv2-MIB::sysUpTime.0="123" 正常运行时间="123"
+oid-type2="ObjectName" value2-type="ObjectIdentifier" 1.3.6.1.6.3.1.1.4.1.0="1.3.6.1.6.3.1.1.5.1" value2="1.3.6.1.6.3.1.1.5.1" SNMPv2-MIB::snmpTrapOID.0="SNMPv2-MIB::coldStart" 陷阱="None"
+oid-type3="ObjectName" value3-type="OctetString" 1.3.6.1.2.1.1.5.0="testk8s" value3="testk8s" SNMPv2-MIB::sysName.0="testk8s" 
 ```
 
 
