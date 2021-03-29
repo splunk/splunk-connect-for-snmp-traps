@@ -1,5 +1,6 @@
 import time
 import config
+import utils
 # from metrics import Metrics
 
 from perf_engine import start_many_threads, start_many_processes
