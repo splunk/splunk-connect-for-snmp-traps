@@ -6,19 +6,19 @@ import utils
 
 
 # Threads - TBR
-# def start_many_threads(threads_list, number_of_threads_to_start, scenario_name_to_run):
-#     how_long_to_run_sec = 10
-#
-#     for x in range(number_of_threads_to_start):
-#         print(f"Starting Thread: {x}")
-#         new_thread = Thread(target=scenario_name_to_run, args=(how_long_to_run_sec, f"Thread-{x}"))
-#         new_thread.start()
-#         threads_list.append(new_thread)
-#         # time.sleep(1)  # delay between Threads
-#
-#     for current_thread in threads_list:
-#         current_thread.join()
-#     print(f"Waiting for Threads to finish")
+def start_many_threads(threads_list, number_of_threads_to_start, scenario_name_to_run):
+    how_long_to_run_sec = 10
+
+    for x in range(number_of_threads_to_start):
+        print(f"Starting Thread: {x}")
+        new_thread = Thread(target=scenario_name_to_run, args=(how_long_to_run_sec, f"Thread-{x}"))
+        new_thread.start()
+        threads_list.append(new_thread)
+        # time.sleep(1)  # delay between Threads
+
+    for current_thread in threads_list:
+        current_thread.join()
+    print(f"Waiting for Threads to finish")
 
 
 def start_many_processes(threads_list, number_of_threads_to_start, scenario_name_to_run):
