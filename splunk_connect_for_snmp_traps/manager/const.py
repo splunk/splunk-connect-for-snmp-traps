@@ -3,7 +3,7 @@ from pysnmp.entity import config
 AuthProtocolMap = {
     "NOAUTH": config.usmNoAuthProtocol,
     "MD5": config.usmHMACMD5AuthProtocol,
-    "SHA": config.usmHMACSHAAuthProtocol
+    "SHA": config.usmHMACSHAAuthProtocol,
 }
 
 PrivProtocolMap = {

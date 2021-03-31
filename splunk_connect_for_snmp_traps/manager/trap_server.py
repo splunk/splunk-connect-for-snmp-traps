@@ -15,8 +15,9 @@ import socket
 import os
 
 # debugging log for SNMPv3 trap
-from pysnmp import debug 
-debug.setLogger(debug.Debug('all'))
+from pysnmp import debug
+
+debug.setLogger(debug.Debug("all"))
 
 logger = logging.getLogger(__name__)
 
@@ -83,37 +84,47 @@ class TrapServer:
         sudo snmptrap -v 3 -e 0x8000000004030202 -l noAuthNoPriv -u snmpv3test2 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
         sudo snmptrap -v 3 -e 0x8000000004030202 -l authPriv -u snmpv3test2 -a SHA -A AuthPass11 -x AES -X PrivPass22 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 120
         
-        user3: 
+        user3: snmpv3test3
         sudo snmptrap -e 0x8000000004030203 -v3 -l noAuthNoPriv -u snmpv3test3 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
         """
         for user_config in snmp_config["communities"]["v3"]:
             # user_config = snmp_config["communities"]["v3"].get(user)
             logger.info(f"Configuring V3 {user_config}")
             username = user_config.get("userName", None)
-            authprotocol = AuthProtocolMap[user_config.get("authProtocol", "NOAUTH").upper()]
+            authprotocol = AuthProtocolMap[
+                user_config.get("authProtocol", "NOAUTH").upper()
+            ]
             authkey = user_config.get("authKey", None)
             # authProtocol default is NoAuth if authKey is None
             # authProtocol default is MD5 if authKey is given
             if user_config.get("authProtocol", None) is None and authkey is not None:
-                authprotocol = AuthProtocolMap[user_config.get("authProtocol", "MD5").upper()]
-            privprotocol = PrivProtocolMap[user_config.get("privProtocol", "NOPRIV").upper()]
+                authprotocol = AuthProtocolMap[
+                    user_config.get("authProtocol", "MD5").upper()
+                ]
+            privprotocol = PrivProtocolMap[
+                user_config.get("privProtocol", "NOPRIV").upper()
+            ]
             privkey = user_config.get("privKey", None)
             # privProtocol default is NoPriv if privKey is None
             # privProtocol default is DES if privKey is given
             if user_config.get("privProtocol", None) is None and privkey is not None:
-                privprotocol = PrivProtocolMap[user_config.get("privProtocol", "DES").upper()]
+                privprotocol = PrivProtocolMap[
+                    user_config.get("privProtocol", "DES").upper()
+                ]
             securityengineId = user_config.get("securityEngineId", None)
             if securityengineId:
                 securityengineId = rfc1902.OctetString(hexValue=str(securityengineId))
-            logger.info(f"V3 params: username: {username}, authprotocol: {user_config.get('authProtocol', None)}-{authprotocol}, authkey: {authkey}, privprotocol: {user_config.get('privProtocol', None)}-{privprotocol}, privkey: {privkey}, securityengineId: {securityengineId}")
+            logger.info(
+                f"V3 params: username: {username}, authprotocol: {user_config.get('authProtocol', None)}-{authprotocol}, authkey: {authkey}, privprotocol: {user_config.get('privProtocol', None)}-{privprotocol}, privkey: {privkey}, securityengineId: {securityengineId}"
+            )
             config.addV3User(
-                self._snmp_engine, 
+                self._snmp_engine,
                 username,
-                authprotocol, 
+                authprotocol,
                 authkey,
-                privprotocol, 
+                privprotocol,
                 privkey,
-                securityengineId
+                securityengineId,
             )
         logger.debug(f"config: {config}")
 
@@ -180,9 +191,9 @@ class TrapServer:
 
         # Send API call to SNMP MIB server to get var_binds translated
         # mib_server_url = self._server_config["snmp"]["mib-server"]["url"]
-        mib_server_url = os.environ['MIBS_SERVER_URL']
+        mib_server_url = os.environ["MIBS_SERVER_URL"]
         trap_event_string = get_translation(var_binds, mib_server_url)
-        
+
         self._hec_sender.post_data(header["Agent_Hostname"], trap_event_string)
 
     def run_trap_server(self):
