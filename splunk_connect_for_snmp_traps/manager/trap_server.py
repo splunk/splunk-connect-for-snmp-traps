@@ -74,21 +74,38 @@ class TrapServer:
         )
 
         test snmptrap command:
-        sudo snmptrap -e 0x8000000004030201 -v3 -l noAuthNoPriv -u snmpv3test localhost:2162 123 1.3.6.1.6.3.1.1.5.1
+        user1: snmpv3test
+        sudo snmptrap -v 3 -e 0x8000000004030201 -l noAuthNoPriv -u snmpv3test localhost:2162 123 1.3.6.1.6.3.1.1.5.1
         sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -A AuthPass1 -X PrivPass2 localhost:2162 2 1.3.6.1.2.1.1.3.0
         sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -a MD5 -A AuthPass1 -x DES -X PrivPass2 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 60
-        sudo snmptrap -e 0x8000000004030201 -v3 -l noAuthNoPriv -u snmpv3test2 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
-        sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test2 -a SHA -A AuthPass11 -x AES -X PrivPass22 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 120
+
+        user2: snmpv3test2
+        sudo snmptrap -v 3 -e 0x8000000004030202 -l noAuthNoPriv -u snmpv3test2 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
+        sudo snmptrap -v 3 -e 0x8000000004030202 -l authPriv -u snmpv3test2 -a SHA -A AuthPass11 -x AES -X PrivPass22 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 120
+        
+        user3: 
+        sudo snmptrap -e 0x8000000004030203 -v3 -l noAuthNoPriv -u snmpv3test3 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
         """
         for user_config in snmp_config["communities"]["v3"]:
             # user_config = snmp_config["communities"]["v3"].get(user)
             logger.info(f"Configuring V3 {user_config}")
             username = user_config.get("userName", None)
-            authprotocol = AuthProtocolMap[user_config.get("authProtocol", "MD5").upper()]
+            authprotocol = AuthProtocolMap[user_config.get("authProtocol", "NOAUTH").upper()]
             authkey = user_config.get("authKey", None)
-            privprotocol = PrivProtocolMap[user_config.get("privProtocol", "DES").upper()]
+            # authProtocol default is NoAuth if authKey is None
+            # authProtocol default is MD5 if authKey is given
+            if user_config.get("authProtocol", None) is None and authkey is not None:
+                authprotocol = AuthProtocolMap[user_config.get("authProtocol", "MD5").upper()]
+            privprotocol = PrivProtocolMap[user_config.get("privProtocol", "NOPRIV").upper()]
             privkey = user_config.get("privKey", None)
-            logger.info(f"V3 params: username: {username}, authprotocol: {user_config.get('authProtocol', 'MD5').upper()}-{authprotocol}, authkey: {authkey}, privprotocol: {user_config.get('privProtocol', 'DES').upper()}-{privprotocol}, privkey: {privkey}")
+            # privProtocol default is NoPriv if privKey is None
+            # privProtocol default is DES if privKey is given
+            if user_config.get("privProtocol", None) is None and privkey is not None:
+                privprotocol = PrivProtocolMap[user_config.get("privProtocol", "DES").upper()]
+            securityengineId = user_config.get("securityEngineId", None)
+            if securityengineId:
+                securityengineId = rfc1902.OctetString(hexValue=str(securityengineId))
+            logger.info(f"V3 params: username: {username}, authprotocol: {user_config.get('authProtocol', None)}-{authprotocol}, authkey: {authkey}, privprotocol: {user_config.get('privProtocol', None)}-{privprotocol}, privkey: {privkey}, securityengineId: {securityengineId}")
             config.addV3User(
                 self._snmp_engine, 
                 username,
@@ -96,9 +113,7 @@ class TrapServer:
                 authkey,
                 privprotocol, 
                 privkey,
-                # engineID
-                # TODO discuss how to set the engineID, just use a random number for now
-                rfc1902.OctetString(hexValue='8000000004030201')
+                securityengineId
             )
         logger.debug(f"config: {config}")
 
