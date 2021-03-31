@@ -41,6 +41,25 @@ jobs:
           path: build-container
           destination: build-container
 
+  test:
+    docker:
+      - image: circleci/python:3.8.6
+    steps:
+      - checkout
+      - run:
+          name: "Run Unit Tests"
+          command: |
+            curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+            source $HOME/.poetry/env
+            poetry install
+            poetry run coverage run --source=./splunk_connect_for_snmp_traps -m pytest
+            poetry run coverage json
+            poetry run coverage html
+      - store_artifacts:
+          path: coverage.json
+      - store_artifacts:
+          path: htmlcov
+
   release:
     docker:
       - image: circleci/node:12
@@ -122,6 +141,8 @@ workflows:
   version: 2
   build_test:
     jobs:
+      - test
+
       - build:
           context:
             - gdi-github
