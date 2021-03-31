@@ -107,9 +107,9 @@ class TrapServer:
 
         # Send API call to SNMP MIB server to get var_binds translated
         # mib_server_url = self._server_config["snmp"]["mib-server"]["url"]
-        mib_server_url = os.environ['MIBS_SERVER_URL']
+        mib_server_url = os.environ["MIBS_SERVER_URL"]
         trap_event_string = get_translation(var_binds, mib_server_url)
-        
+
         self._hec_sender.post_data(header["Agent_Hostname"], trap_event_string)
 
     def run_trap_server(self):
