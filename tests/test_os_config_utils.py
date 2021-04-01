@@ -1,6 +1,8 @@
 from unittest import TestCase
 
-from splunk_connect_for_snmp_traps.manager.os_config_utils import max_allowed_working_threads
+from splunk_connect_for_snmp_traps.manager.os_config_utils import (
+    max_allowed_working_threads,
+)
 
 
 class MaxAllowedWorkingThreadsTest(TestCase):
