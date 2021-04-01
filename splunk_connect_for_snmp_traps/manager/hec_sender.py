@@ -36,7 +36,6 @@ class HecSender:
             "sourcetype": "sc4snmp:traps",
             "host": host,
             "index": self._args.index,
-            # "index": self._server_config["splunk"]["index"],
             "event": variables_binds,
         }
 
