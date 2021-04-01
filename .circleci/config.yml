@@ -60,6 +60,17 @@ jobs:
       - store_artifacts:
           path: htmlcov
 
+  format-code:
+    docker:
+      - image: circleci/python:3.8.6
+    steps:
+      - checkout
+      - run:
+          name: "Check Formatting"
+          command: |
+            pip install black
+            black --check ./
+
   release:
     docker:
       - image: circleci/node:12
@@ -142,6 +153,8 @@ workflows:
   build_test:
     jobs:
       - test
+
+      - format-code
 
       - build:
           context:
