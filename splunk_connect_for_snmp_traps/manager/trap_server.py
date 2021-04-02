@@ -96,7 +96,7 @@ class TrapServer:
             logger.info(f"Configuring V3 {user_config}")
             username = user_config.get("userName", None)
             authprotocol = AuthProtocolMap[
-                user_config.get("authProtocol", "NOAUTH").upper()
+                user_config.get("authProtocol", "NONE").upper()
             ]
             authkey = user_config.get("authKey", None)
             # authProtocol default is NoAuth if authKey is None
@@ -106,7 +106,7 @@ class TrapServer:
                     user_config.get("authProtocol", "MD5").upper()
                 ]
             privprotocol = PrivProtocolMap[
-                user_config.get("privProtocol", "NOPRIV").upper()
+                user_config.get("privProtocol", "NONE").upper()
             ]
             privkey = user_config.get("privKey", None)
             # privProtocol default is NoPriv if privKey is None
