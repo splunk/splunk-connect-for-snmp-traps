@@ -59,7 +59,11 @@ class TrapServer:
         sudo snmptrap -v 2c -c public localhost:2162 123 1.3.6.1.6.3.1.1.5.1 1.3.6.1.2.1.1.5.0 s test2
 
         """
-        for community in snmp_config["communities"]["v1"]:
+        for community in snmp_config["communities"].get("v1", None):
+            logger.info(f"Configuring V1 {community}")
+            config.addV1System(self._snmp_engine, community, community)
+
+        for community in snmp_config["communities"].get("v2", None):
             logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
 
@@ -87,7 +91,7 @@ class TrapServer:
         user3: snmpv3test3
         sudo snmptrap -e 0x8000000004030203 -v3 -l noAuthNoPriv -u snmpv3test3 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
         """
-        for user_config in snmp_config["communities"]["v3"]:
+        for user_config in snmp_config["communities"].get("v3", None):
             # user_config = snmp_config["communities"]["v3"].get(user)
             logger.info(f"Configuring V3 {user_config}")
             username = user_config.get("userName", None)
