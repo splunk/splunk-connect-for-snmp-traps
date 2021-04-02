@@ -14,6 +14,8 @@ from splunk_connect_for_snmp_traps.manager.const import AuthProtocolMap, PrivPro
 import socket
 import os
 
+
+# *TODO*: enable debug all only if end-user has set debug logging mode.
 # debugging log for SNMPv3 trap
 from pysnmp import debug
 
