@@ -4,10 +4,22 @@ from pysnmp.carrier.asyncore.dgram import udp, udp6
 from pysnmp.entity import engine, config
 from pysnmp.entity.rfc3413 import ntfrcv
 
+from pysnmp.proto.secmod.rfc3826.priv import aes
+from pysnmp.proto.secmod.rfc3414.auth import hmacsha
+from pysnmp.proto import rfc1902
+
 from splunk_connect_for_snmp_traps.manager.hec_sender import HecSender
 from splunk_connect_for_snmp_traps.manager.mib_server_client import get_translation
+from splunk_connect_for_snmp_traps.manager.const import AuthProtocolMap, PrivProtocolMap
 import socket
 import os
+
+
+# *TODO*: enable debug all only if end-user has set debug logging mode.
+# debugging log for SNMPv3 trap
+from pysnmp import debug
+
+debug.setLogger(debug.Debug("all"))
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +53,87 @@ class TrapServer:
             )
         # SNMPv1/2c setup
         # SecurityName <-> CommunityName mapping
-        for community in snmp_config["communities"]["v1"]:
+        """
+        test snmptrap command:
+        v1: 
+        sudo snmptrap -v 1 -c public localhost:2162 '1.2.3.4.5.6' '192.193.194.195' 6 99 '55' 1.11.12.13.14.15  s "teststring"
+        v2c:
+        sudo snmptrap -v 2c -c public localhost:2162 123 1.3.6.1.6.3.1.1.5.1 1.3.6.1.2.1.1.5.0 s test2
+
+        """
+        for community in snmp_config["communities"].get("v1", None):
             logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
+
+        for community in snmp_config["communities"].get("v2", None):
+            logger.info(f"Configuring V1 {community}")
+            config.addV1System(self._snmp_engine, community, community)
+
+        # SNMPv3/USM setup
+        """
+        SNMPv3 params for addV3User(
+            snmpEngine,
+            userName,
+            authProtocal: MD5(default),
+            authKey,
+            privProtocal: DES(default),
+            engineID: snmptrap command should specify the same egienID by using option -e
+        )
+
+        test snmptrap command:
+        user1: snmpv3test
+        sudo snmptrap -v 3 -e 0x8000000004030201 -l noAuthNoPriv -u snmpv3test localhost:2162 123 1.3.6.1.6.3.1.1.5.1
+        sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -A AuthPass1 -X PrivPass2 localhost:2162 2 1.3.6.1.2.1.1.3.0
+        sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -a MD5 -A AuthPass1 -x DES -X PrivPass2 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 60
+
+        user2: snmpv3test2
+        sudo snmptrap -v 3 -e 0x8000000004030202 -l noAuthNoPriv -u snmpv3test2 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
+        sudo snmptrap -v 3 -e 0x8000000004030202 -l authPriv -u snmpv3test2 -a SHA -A AuthPass11 -x AES -X PrivPass22 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 120
+        
+        user3: snmpv3test3
+        sudo snmptrap -e 0x8000000004030203 -v3 -l noAuthNoPriv -u snmpv3test3 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
+        """
+        for user_config in snmp_config["communities"].get("v3", None):
+            # user_config = snmp_config["communities"]["v3"].get(user)
+            logger.info(f"Configuring V3 {user_config}")
+            username = user_config.get("userName", None)
+            authprotocol = AuthProtocolMap[
+                user_config.get("authProtocol", "NONE").upper()
+            ]
+            authkey = user_config.get("authKey", None)
+            # authProtocol default is NoAuth if authKey is None
+            # authProtocol default is MD5 if authKey is given
+            if user_config.get("authProtocol", None) is None and authkey is not None:
+                authprotocol = AuthProtocolMap[
+                    user_config.get("authProtocol", "MD5").upper()
+                ]
+            privprotocol = PrivProtocolMap[
+                user_config.get("privProtocol", "NONE").upper()
+            ]
+            privkey = user_config.get("privKey", None)
+            # privProtocol default is NoPriv if privKey is None
+            # privProtocol default is DES if privKey is given
+            if user_config.get("privProtocol", None) is None and privkey is not None:
+                privprotocol = PrivProtocolMap[
+                    user_config.get("privProtocol", "DES").upper()
+                ]
+            securityengineId = user_config.get("securityEngineId", None)
+            if securityengineId:
+                securityengineId = rfc1902.OctetString(hexValue=str(securityengineId))
+            logger.info(
+                f"V3 params: username: {username}, authprotocol: {user_config.get('authProtocol', None)}-{authprotocol}, authkey: {authkey}, privprotocol: {user_config.get('privProtocol', None)}-{privprotocol}, privkey: {privkey}, securityengineId: {securityengineId}"
+            )
+            config.addV3User(
+                self._snmp_engine,
+                username,
+                authprotocol,
+                authkey,
+                privprotocol,
+                privkey,
+                securityengineId,
+            )
+        logger.debug(f"config: {config}")
+
         # Register SNMP Application at the SNMP engine
         ntfrcv.NotificationReceiver(self._snmp_engine, self.snmp_callback_function)
 
