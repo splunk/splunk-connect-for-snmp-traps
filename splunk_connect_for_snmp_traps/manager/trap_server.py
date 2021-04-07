@@ -175,38 +175,6 @@ class TrapServer:
             'Notification from ContextEngineId "%s", ContextName "%s"'
             % (context_engine_id.prettyPrint(), context_name.prettyPrint())
         )
-        # Get an execution context...
-        execContext = snmp_engine.observer.getExecutionContext(
-            "rfc3412.receiveMessage:request"
-        )
-        logger.debug(
-            f'execContext["transportAddress"]: {execContext["transportAddress"]}'
-        )
-        logger.debug(
-            'Notification from %s, ContextEngineId "%s", '
-            'ContextName "%s"'
-            % (
-                "@".join([str(x) for x in execContext["transportAddress"]]),
-                context_engine_id.prettyPrint(),
-                context_name.prettyPrint(),
-            )
-        )
-        logger.debug(
-            f"state_reference: {snmp_engine.msgAndPduDsp.getTransportInfo(state_reference)}"
-        )
-        transportDomain, transportAddress = snmp_engine.msgAndPduDsp.getTransportInfo(
-            state_reference
-        )
-
-        logger.debug(
-            "Notification from %s, SNMP Engine %s, "
-            "Context %s"
-            % (
-                transportAddress,
-                context_engine_id.prettyPrint(),
-                context_name.prettyPrint(),
-            )
-        )
         device_ip = snmp_engine.msgAndPduDsp.getTransportInfo(state_reference)[1][0]
         header = {}
         try:
