@@ -198,7 +198,7 @@ class TrapServer:
             state_reference
         )
 
-        print(
+        logger.debug(
             "Notification from %s, SNMP Engine %s, "
             "Context %s"
             % (
