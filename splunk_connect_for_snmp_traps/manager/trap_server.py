@@ -200,7 +200,7 @@ class TrapServer:
         mib_server_url = os.environ["MIBS_SERVER_URL"]
         trap_event_string = get_translation(var_binds, mib_server_url)
 
-        self._hec_sender.post_data(header["Agent_Hostname"], trap_event_string)
+        self._hec_sender.post_data(device_ip, trap_event_string)
 
     def run_trap_server(self):
         self._snmp_engine.transportDispatcher.jobStarted(1)
