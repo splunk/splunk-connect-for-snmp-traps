@@ -1,1 +1,2 @@
 mibs/.*\.py
+poetry.lock
