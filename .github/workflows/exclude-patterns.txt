@@ -1,1 +1,1 @@
-.*-MIB.py$
+mibs/.*\.py
