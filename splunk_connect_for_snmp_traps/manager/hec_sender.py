@@ -2,6 +2,7 @@ import concurrent.futures
 import logging
 import os
 import threading
+import time
 
 import requests
 
@@ -33,6 +34,7 @@ class HecSender:
 
     def post_data_to_thread_pool(self, host, variables_binds):
         data = {
+            "time": time.time(),
             "sourcetype": "sc4snmp:traps",
             "host": host,
             "index": self._args.index,
