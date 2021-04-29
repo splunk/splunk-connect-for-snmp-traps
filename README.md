@@ -37,12 +37,6 @@ poetry install
 poetry run sc4snmp-traps
 ```
 
-**Note**: The default index for traps is `netops`. You can use `-i` option to specify the index where you want traps to be sent to.
-
-```
-poetry run sc4snmp-traps -i <index_name>
-```
-
 ### Send Sample Traps
 
 ```
