@@ -1,9 +1,12 @@
-import logging
 import json
-import requests
+import logging
 import os
+
+import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+
+from splunk_connect_for_snmp_traps.utilities import format_value_for_mib_server
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +25,7 @@ def get_translation(var_binds, mib_server_url):
         var_bind = {
             "oid": str(name),
             "oid_type": name.__class__.__name__,
-            "val": str(val),
+            "val": format_value_for_mib_server(val),
             "val_type": val.__class__.__name__,
         }
         var_binds_list.append(var_bind)
