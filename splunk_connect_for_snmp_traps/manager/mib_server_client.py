@@ -25,7 +25,7 @@ def get_translation(var_binds, mib_server_url):
         var_bind = {
             "oid": str(name),
             "oid_type": name.__class__.__name__,
-            "val": format_value_for_mib_server(val),
+            "val": format_value_for_mib_server(val, val.__class__.__name__),
             "val_type": val.__class__.__name__,
         }
         var_binds_list.append(var_bind)
