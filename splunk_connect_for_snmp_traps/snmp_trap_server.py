@@ -32,6 +32,10 @@ def main():
     )
     parser.add_argument("-c", "--config", default="config.yaml", help="Config File")
 
+    parser.add_argument(
+        "-i", "--index", default="##EVENTS_INDEX##", help="Index for traps"
+    )
+
     args = parser.parse_args()
 
     log_level = args.loglevel.upper()
