@@ -2,6 +2,7 @@ import concurrent.futures
 import logging
 import os
 import threading
+import time
 
 import requests
 
@@ -24,6 +25,7 @@ class HecSender:
         user_suggested_working_threads = self._args.hec_threads
         max_workers = max_allowed_working_threads(user_suggested_working_threads)
         logger.debug(f"Configured a thread-pool with {max_workers} concurrent threads")
+        logger.debug(f"Configured Splunk index for SNMP traps: {self._args.index}")
         return concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
 
     def get_session(self):
@@ -33,9 +35,10 @@ class HecSender:
 
     def post_data_to_thread_pool(self, host, variables_binds):
         data = {
+            "time": time.time(),
             "sourcetype": "sc4snmp:traps",
             "host": host,
-            "index": self._server_config["splunk"]["index"],
+            "index": self._args.index,
             "event": variables_binds,
         }
 
