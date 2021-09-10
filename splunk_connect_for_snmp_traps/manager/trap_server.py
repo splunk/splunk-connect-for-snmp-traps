@@ -16,9 +16,8 @@
 import logging
 import os
 import socket
+import asyncio
 
-# *TODO*: enable debug all only if end-user has set debug logging mode.
-# debugging log for SNMPv3 trap
 from pysnmp import debug
 from pysnmp.carrier.asyncore.dgram import udp, udp6
 from pysnmp.entity import engine, config
@@ -43,6 +42,9 @@ class TrapServer:
         self._hec_sender = HecSender(args, self._server_config)
 
     def configure_trap_server(self):
+        # Get the event loop for this thread
+        loop = asyncio.get_event_loop()
+
         self._snmp_engine.observer.registerObserver(
             self.request_observer,
             "rfc3412.receiveMessage:request",
@@ -61,48 +63,55 @@ class TrapServer:
                 udp6.domainName,
                 udp6.Udp6Transport().openServerMode(("::0", self._args.port)),
             )
-        # SNMPv1/2c setup
-        # SecurityName <-> CommunityName mapping
-        """
-        test snmptrap command:
-        v1: 
-        sudo snmptrap -v 1 -c public localhost:2162 '1.2.3.4.5.6' '192.193.194.195' 6 99 '55' 1.11.12.13.14.15  s "teststring"
-        v2c:
-        sudo snmptrap -v 2c -c public localhost:2162 123 1.3.6.1.6.3.1.1.5.1 1.3.6.1.2.1.1.5.0 s test2
+        self.setup_v1v2c(snmp_config)
+        self.setup_v3(snmp_config)
 
+        # Register SNMP Application at the SNMP engine
+        ntfrcv.NotificationReceiver(self._snmp_engine, self.snmp_callback_function)
+
+        loop.run_forever()
+
+    def setup_v1v2c(self, snmp_config):
         """
+                test snmptrap command:
+                v1:
+                sudo snmptrap -v 1 -c public localhost:2162 '1.2.3.4.5.6' '192.193.194.195' 6 99 '55' 1.11.12.13.14.15  s "teststring"
+                v2c:
+                sudo snmptrap -v 2c -c public localhost:2162 123 1.3.6.1.6.3.1.1.5.1 1.3.6.1.2.1.1.5.0 s test2
+
+                """
         for community in snmp_config["communities"].get("v1", None):
             logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
-
         for community in snmp_config["communities"].get("v2", None):
             logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
 
+    def setup_v3(self, snmp_config):
         # SNMPv3/USM setup
         """
-        SNMPv3 params for addV3User(
-            snmpEngine,
-            userName,
-            authProtocal: MD5(default),
-            authKey,
-            privProtocal: DES(default),
-            engineID: snmptrap command should specify the same egienID by using option -e
-        )
+                SNMPv3 params for addV3User(
+                    snmpEngine,
+                    userName,
+                    authProtocal: MD5(default),
+                    authKey,
+                    privProtocal: DES(default),
+                    engineID: snmptrap command should specify the same egienID by using option -e
+                )
 
-        test snmptrap command:
-        user1: snmpv3test
-        sudo snmptrap -v 3 -e 0x8000000004030201 -l noAuthNoPriv -u snmpv3test localhost:2162 123 1.3.6.1.6.3.1.1.5.1
-        sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -A AuthPass1 -X PrivPass2 localhost:2162 2 1.3.6.1.2.1.1.3.0
-        sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -a MD5 -A AuthPass1 -x DES -X PrivPass2 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 60
+                test snmptrap command:
+                user1: snmpv3test
+                sudo snmptrap -v 3 -e 0x8000000004030201 -l noAuthNoPriv -u snmpv3test localhost:2162 123 1.3.6.1.6.3.1.1.5.1
+                sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -A AuthPass1 -X PrivPass2 localhost:2162 2 1.3.6.1.2.1.1.3.0
+                sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -a MD5 -A AuthPass1 -x DES -X PrivPass2 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 60
 
-        user2: snmpv3test2
-        sudo snmptrap -v 3 -e 0x8000000004030202 -l noAuthNoPriv -u snmpv3test2 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
-        sudo snmptrap -v 3 -e 0x8000000004030202 -l authPriv -u snmpv3test2 -a SHA -A AuthPass11 -x AES -X PrivPass22 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 120
-        
-        user3: snmpv3test3
-        sudo snmptrap -e 0x8000000004030203 -v3 -l noAuthNoPriv -u snmpv3test3 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
-        """
+                user2: snmpv3test2
+                sudo snmptrap -v 3 -e 0x8000000004030202 -l noAuthNoPriv -u snmpv3test2 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
+                sudo snmptrap -v 3 -e 0x8000000004030202 -l authPriv -u snmpv3test2 -a SHA -A AuthPass11 -x AES -X PrivPass22 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 120
+
+                user3: snmpv3test3
+                sudo snmptrap -e 0x8000000004030203 -v3 -l noAuthNoPriv -u snmpv3test3 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
+                """
         for user_config in snmp_config["communities"].get("v3", None):
             # user_config = snmp_config["communities"]["v3"].get(user)
             logger.info(f"Configuring V3 {user_config}")
@@ -144,9 +153,6 @@ class TrapServer:
             )
         logger.debug(f"config: {config}")
 
-        # Register SNMP Application at the SNMP engine
-        ntfrcv.NotificationReceiver(self._snmp_engine, self.snmp_callback_function)
-
     # Register a callback to be invoked at specified execution point of
     # SNMP Engine and passed local variables at code point's local scope
     # noinspection PyUnusedLocal,PyUnusedLocal
@@ -173,13 +179,13 @@ class TrapServer:
     # Callback function for receiving notifications
     # noinspection PyUnusedLocal,PyUnusedLocal,PyUnusedLocal
     def snmp_callback_function(
-        self,
-        snmp_engine,
-        state_reference,
-        context_engine_id,
-        context_name,
-        var_binds,
-        callback_ctx,
+            self,
+            snmp_engine,
+            state_reference,
+            context_engine_id,
+            context_name,
+            var_binds,
+            callback_ctx,
     ):
         logger.debug(
             'Notification from ContextEngineId "%s", ContextName "%s"'
@@ -191,7 +197,7 @@ class TrapServer:
             hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(device_ip)
             parts = str(hostname).split(".")
             name = parts[0]
-            # print(name)
+
             if len(parts) > 1:
                 header["Agent_Hostname"] = name
                 logger.debug(f"host={header['Agent_Hostname']} device_ip={device_ip}")
@@ -205,10 +211,7 @@ class TrapServer:
 
         header["Agent_Address"] = device_ip
 
-        # Send API call to SNMP MIB server to get var_binds translated
-        # mib_server_url = self._server_config["snmp"]["mib-server"]["url"]
-        mib_server_url = os.environ["MIBS_SERVER_URL"]
-        trap_event_string = get_translation(var_binds, mib_server_url)
+        trap_event_string = get_translation(var_binds, os.environ["MIBS_SERVER_URL"])
 
         self._hec_sender.post_data(device_ip, trap_event_string)
 
