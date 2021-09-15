@@ -42,9 +42,6 @@ class TrapServer:
         self._hec_sender = HecSender(args, self._server_config)
 
     def configure_trap_server(self):
-        # Get the event loop for this thread
-        loop = asyncio.get_event_loop()
-
         self._snmp_engine.observer.registerObserver(
             self.request_observer,
             "rfc3412.receiveMessage:request",
@@ -68,8 +65,6 @@ class TrapServer:
 
         # Register SNMP Application at the SNMP engine
         ntfrcv.NotificationReceiver(self._snmp_engine, self.snmp_callback_function)
-
-        loop.run_forever()
 
     def setup_v1v2c(self, snmp_config):
         """
@@ -211,7 +206,10 @@ class TrapServer:
 
         header["Agent_Address"] = device_ip
 
-        trap_event_string = get_translation(var_binds, os.environ["MIBS_SERVER_URL"])
+        loop = asyncio.get_event_loop()
+        tasks = get_translation(var_binds, os.environ["MIBS_SERVER_URL"])
+
+        trap_event_string = loop.run_until_complete(asyncio.gather(tasks))
 
         self._hec_sender.post_data(device_ip, trap_event_string)
 

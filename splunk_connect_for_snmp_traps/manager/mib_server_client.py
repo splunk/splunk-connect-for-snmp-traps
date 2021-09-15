@@ -57,7 +57,7 @@ async def get_translation(var_binds, mib_server_url):
         session = ClientSession()
         resp = await session.post(TRANSLATION_URL, headers=headers, data=payload)
         if resp.status == 200:
-            trap_event_string = resp.text
+            trap_event_string = await resp.text()
         if resp.status != 200:
             logger.error(f"[-] Mib Server API Error with code: {resp.status}")
     except Exception as e:
