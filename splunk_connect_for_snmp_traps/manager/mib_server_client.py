@@ -53,12 +53,12 @@ async def get_translation(var_binds, mib_server_url):
     logger.debug(f"[-] TRANSLATION_URL: {TRANSLATION_URL}")
 
     try:
-        session = ClientSession()
-        resp = await session.post(TRANSLATION_URL, headers=headers, data=payload)
-        if resp.status == 200:
-            trap_event_string = await resp.text()
-        if resp.status != 200:
-            logger.error(f"[-] Mib Server API Error with code: {resp.status}")
+        async with ClientSession() as session:
+            resp = await session.post(TRANSLATION_URL, headers=headers, data=payload)
+            if resp.status == 200:
+                trap_event_string = await resp.text()
+            if resp.status != 200:
+                logger.error(f"[-] Mib Server API Error with code: {resp.status}")
     except Exception as e:
         logger.error(
             f"MIB server is unreachable! Error happened while communicating to MIB server to perform "
