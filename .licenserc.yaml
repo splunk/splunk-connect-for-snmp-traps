@@ -28,5 +28,6 @@ header:
     - "LICENSE"
     - "NOTICE"
     - "*.lock"
+    - ".flake8"
 
   comment: on-failure
