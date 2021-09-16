@@ -18,7 +18,6 @@ import logging
 import os
 
 from aiohttp import ClientSession
-
 from splunk_connect_for_snmp_traps.utilities import format_value_for_mib_server
 
 logger = logging.getLogger(__name__)
