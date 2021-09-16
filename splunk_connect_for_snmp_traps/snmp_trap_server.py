@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    logger.info(f"Startup Config")
+    logger.info("Startup Config")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-l",
