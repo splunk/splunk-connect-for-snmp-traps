@@ -201,8 +201,7 @@ class TrapServer:
             else:
                 header["Agent_Hostname"] = device_ip
                 logger.debug(f"device_ip={device_ip}")
-        except Exception as e:
-            logger.debug(e)
+        except:  # noqa: E722
             logger.debug(f"device_ip={device_ip}")
             header["Agent_Hostname"] = device_ip
             pass
