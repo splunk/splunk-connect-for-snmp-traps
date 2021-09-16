@@ -61,8 +61,8 @@ async def get_translation(var_binds, mib_server_url):
             logger.error(f"[-] Mib Server API Error with code: {resp.status}")
     except Exception as e:
         logger.error(
-            f"MIB server is unreachable! Error happened while communicating to MIB server"
-            f" to perform the Translation: {e} "
+            f"MIB server is unreachable! Error happened while communicating to MIB server to perform "
+            f"the Translation: {e}"
         )
 
     return trap_event_string
