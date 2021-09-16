@@ -213,10 +213,7 @@ class TrapServer:
 
         header["Agent_Address"] = device_ip
 
-        loop = asyncio.get_event_loop()
-        tasks = get_translation(var_binds, os.environ["MIBS_SERVER_URL"])
-
-        trap_event_string = loop.run_until_complete(asyncio.gather(tasks))
+        trap_event_string = asyncio.get_event_loop().run_until_complete(get_translation(var_binds, os.environ["MIBS_SERVER_URL"]))
 
         self._hec_sender.post_data(device_ip, trap_event_string)
 
