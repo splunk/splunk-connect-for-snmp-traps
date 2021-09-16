@@ -21,7 +21,7 @@ import socket
 # debugging log for SNMPv3 trap
 from pysnmp import debug
 from pysnmp.carrier.asyncore.dgram import udp, udp6
-from pysnmp.entity import engine, config
+from pysnmp.entity import config, engine
 from pysnmp.entity.rfc3413 import ntfrcv
 from pysnmp.proto import rfc1902
 
@@ -65,8 +65,8 @@ class TrapServer:
         # SecurityName <-> CommunityName mapping
         """
         test snmptrap command:
-        v1: 
-        sudo snmptrap -v 1 -c public localhost:2162 '1.2.3.4.5.6' '192.193.194.195' 6 99 '55' 1.11.12.13.14.15  s "teststring"
+        v1:
+        sudo snmptrap -v 1 -c public localhost:2162 '1.2.3.4.5.6' '192.193.194.195' 6 99 '55' 1.11.12.13.14.15  s "teststring"  # noqa: E501
         v2c:
         sudo snmptrap -v 2c -c public localhost:2162 123 1.3.6.1.6.3.1.1.5.1 1.3.6.1.2.1.1.5.0 s test2
 
@@ -93,13 +93,13 @@ class TrapServer:
         test snmptrap command:
         user1: snmpv3test
         sudo snmptrap -v 3 -e 0x8000000004030201 -l noAuthNoPriv -u snmpv3test localhost:2162 123 1.3.6.1.6.3.1.1.5.1
-        sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -A AuthPass1 -X PrivPass2 localhost:2162 2 1.3.6.1.2.1.1.3.0
-        sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -a MD5 -A AuthPass1 -x DES -X PrivPass2 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 60
+        sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -A AuthPass1 -X PrivPass2 localhost:2162 2 1.3.6.1.2.1.1.3.0  # noqa: E501
+        sudo snmptrap -v 3 -e 0x8000000004030201 -l authPriv -u snmpv3test -a MD5 -A AuthPass1 -x DES -X PrivPass2 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 60  # noqa: E501
 
         user2: snmpv3test2
         sudo snmptrap -v 3 -e 0x8000000004030202 -l noAuthNoPriv -u snmpv3test2 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
-        sudo snmptrap -v 3 -e 0x8000000004030202 -l authPriv -u snmpv3test2 -a SHA -A AuthPass11 -x AES -X PrivPass22 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 120
-        
+        sudo snmptrap -v 3 -e 0x8000000004030202 -l authPriv -u snmpv3test2 -a SHA -A AuthPass11 -x AES -X PrivPass22 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 120  # noqa: E501
+
         user3: snmpv3test3
         sudo snmptrap -e 0x8000000004030203 -v3 -l noAuthNoPriv -u snmpv3test3 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
         """
@@ -131,7 +131,10 @@ class TrapServer:
             if securityengineId:
                 securityengineId = rfc1902.OctetString(hexValue=str(securityengineId))
             logger.info(
-                f"V3 params: username: {username}, authprotocol: {user_config.get('authProtocol', None)}-{authprotocol}, authkey: {authkey}, privprotocol: {user_config.get('privProtocol', None)}-{privprotocol}, privkey: {privkey}, securityengineId: {securityengineId}"
+                f"V3 params: username: {username},"
+                f" authprotocol: {user_config.get('authProtocol', None)}-{authprotocol},"
+                f" authkey: {authkey}, privprotocol: {user_config.get('privProtocol', None)}-{privprotocol}, "
+                f"privkey: {privkey}, securityengineId: {securityengineId}"
             )
             config.addV3User(
                 self._snmp_engine,
@@ -198,7 +201,7 @@ class TrapServer:
             else:
                 header["Agent_Hostname"] = device_ip
                 logger.debug(f"device_ip={device_ip}")
-        except:
+        except:  # noqa: E722
             logger.debug(f"device_ip={device_ip}")
             header["Agent_Hostname"] = device_ip
             pass
