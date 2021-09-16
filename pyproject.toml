@@ -41,4 +41,12 @@ sc4snmp-traps = "splunk_connect_for_snmp_traps.snmp_trap_server:main"
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
 
+[tool.isort]
+profile = "black"
 
+[[tool.mypy.overrides]]
+module = [
+    "requests",
+    "yaml",
+]
+ignore_missing_imports = true

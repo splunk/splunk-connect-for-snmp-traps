@@ -21,7 +21,7 @@ import socket
 # debugging log for SNMPv3 trap
 from pysnmp import debug
 from pysnmp.carrier.asyncore.dgram import udp, udp6
-from pysnmp.entity import engine, config
+from pysnmp.entity import config, engine
 from pysnmp.entity.rfc3413 import ntfrcv
 from pysnmp.proto import rfc1902
 
@@ -65,7 +65,7 @@ class TrapServer:
         # SecurityName <-> CommunityName mapping
         """
         test snmptrap command:
-        v1: 
+        v1:
         sudo snmptrap -v 1 -c public localhost:2162 '1.2.3.4.5.6' '192.193.194.195' 6 99 '55' 1.11.12.13.14.15  s "teststring"
         v2c:
         sudo snmptrap -v 2c -c public localhost:2162 123 1.3.6.1.6.3.1.1.5.1 1.3.6.1.2.1.1.5.0 s test2
@@ -99,7 +99,7 @@ class TrapServer:
         user2: snmpv3test2
         sudo snmptrap -v 3 -e 0x8000000004030202 -l noAuthNoPriv -u snmpv3test2 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
         sudo snmptrap -v 3 -e 0x8000000004030202 -l authPriv -u snmpv3test2 -a SHA -A AuthPass11 -x AES -X PrivPass22 localhost:2162 ''  1.3.6.1.4.1.8072.2.3.0.1 1.3.6.1.4.1.8072.2.3.2.1 i 120
-        
+
         user3: snmpv3test3
         sudo snmptrap -e 0x8000000004030203 -v3 -l noAuthNoPriv -u snmpv3test3 localhost:2162 123 1.3.6.1.6.3.1.1.5.1
         """
@@ -198,7 +198,8 @@ class TrapServer:
             else:
                 header["Agent_Hostname"] = device_ip
                 logger.debug(f"device_ip={device_ip}")
-        except:
+        except Exception as e:
+            logger.debug(e)
             logger.debug(f"device_ip={device_ip}")
             header["Agent_Hostname"] = device_ip
             pass
