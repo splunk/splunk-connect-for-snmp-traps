@@ -83,6 +83,7 @@ class TrapServer:
         for community in snmp_config["communities"].get("v1", None):
             logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
+
         for community in snmp_config["communities"].get("v2", None):
             logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
