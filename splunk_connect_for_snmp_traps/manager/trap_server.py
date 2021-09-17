@@ -24,14 +24,9 @@ from pysnmp.entity import config, engine
 from pysnmp.entity.rfc3413 import ntfrcv
 from pysnmp.proto import rfc1902
 
-from splunk_connect_for_snmp_traps.manager.const import (
-    AuthProtocolMap,
-    PrivProtocolMap,
-)
+from splunk_connect_for_snmp_traps.manager.const import AuthProtocolMap, PrivProtocolMap
 from splunk_connect_for_snmp_traps.manager.hec_sender import HecSender
-from splunk_connect_for_snmp_traps.manager.mib_server_client import (
-    get_translation,
-)
+from splunk_connect_for_snmp_traps.manager.mib_server_client import get_translation
 
 debug.setLogger(debug.Debug("all"))
 
@@ -215,7 +210,9 @@ class TrapServer:
 
         header["Agent_Address"] = device_ip
 
-        trap_event_string = asyncio.get_event_loop().run_until_complete(get_translation(var_binds, os.environ["MIBS_SERVER_URL"]))
+        trap_event_string = asyncio.get_event_loop().run_until_complete(
+            get_translation(var_binds, os.environ["MIBS_SERVER_URL"])
+        )
 
         self._hec_sender.post_data(device_ip, trap_event_string)
 
