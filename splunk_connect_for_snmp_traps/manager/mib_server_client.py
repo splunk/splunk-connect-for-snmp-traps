@@ -17,6 +17,8 @@ import json
 import logging
 import os
 
+import aiohttp
+import backoff
 from aiohttp import ClientSession
 
 from splunk_connect_for_snmp_traps.utilities import format_value_for_mib_server
@@ -50,20 +52,21 @@ async def get_translation(var_binds, mib_server_url):
 
     headers = {"Content-type": "application/json"}
     endpoint = "translation"
-    TRANSLATION_URL = os.path.join(mib_server_url.strip("/"), endpoint)
-    logger.debug(f"[-] TRANSLATION_URL: {TRANSLATION_URL}")
+    translation_url = os.path.join(mib_server_url.strip("/"), endpoint)
+    logger.debug(f"[-] translation_url: {translation_url}")
 
     try:
-        async with ClientSession() as session:
-            resp = await session.post(TRANSLATION_URL, headers=headers, data=payload)
-            if resp.status == 200:
-                trap_event_string = await resp.text()
-            if resp.status != 200:
-                logger.error(f"[-] Mib Server API Error with code: {resp.status}")
+        trap_event_string = await get_url(translation_url, headers, payload)
     except Exception as e:
         logger.error(
-            f"MIB server is unreachable! Error happened while communicating to MIB server to perform "
-            f"the Translation: {e}"
+            f"Error getting translation from MIB Server: {e} "
         )
 
     return trap_event_string
+
+
+@backoff.on_exception(backoff.expo, aiohttp.ClientError, max_tries=3)
+async def get_url(url, headers, payload):
+    async with ClientSession(raise_for_status=True) as session:
+        resp = await session.post(url, headers=headers, data=payload)
+        return await resp.text()
