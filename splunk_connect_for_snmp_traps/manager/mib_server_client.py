@@ -58,9 +58,7 @@ async def get_translation(var_binds, mib_server_url):
     try:
         trap_event_string = await get_url(translation_url, headers, payload)
     except Exception as e:
-        logger.error(
-            f"Error getting translation from MIB Server: {e} "
-        )
+        logger.error(f"Error getting translation from MIB Server: {e} ")
 
     return trap_event_string
 
