@@ -13,12 +13,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 #   ########################################################################
+import asyncio
 import logging
 import os
 import socket
 
-# *TODO*: enable debug all only if end-user has set debug logging mode.
-# debugging log for SNMPv3 trap
 from pysnmp import debug
 from pysnmp.carrier.asyncore.dgram import udp, udp6
 from pysnmp.entity import config, engine
@@ -61,8 +60,13 @@ class TrapServer:
                 udp6.domainName,
                 udp6.Udp6Transport().openServerMode(("::0", self._args.port)),
             )
-        # SNMPv1/2c setup
-        # SecurityName <-> CommunityName mapping
+        self.setup_v1v2c(snmp_config)
+        self.setup_v3(snmp_config)
+
+        # Register SNMP Application at the SNMP engine
+        ntfrcv.NotificationReceiver(self._snmp_engine, self.snmp_callback_function)
+
+    def setup_v1v2c(self, snmp_config):
         """
         test snmptrap command:
         v1:
@@ -79,6 +83,7 @@ class TrapServer:
             logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
 
+    def setup_v3(self, snmp_config):
         # SNMPv3/USM setup
         """
         SNMPv3 params for addV3User(
@@ -147,9 +152,6 @@ class TrapServer:
             )
         logger.debug(f"config: {config}")
 
-        # Register SNMP Application at the SNMP engine
-        ntfrcv.NotificationReceiver(self._snmp_engine, self.snmp_callback_function)
-
     # Register a callback to be invoked at specified execution point of
     # SNMP Engine and passed local variables at code point's local scope
     # noinspection PyUnusedLocal,PyUnusedLocal
@@ -194,24 +196,23 @@ class TrapServer:
             hostname, aliaslist, ipaddrlist = socket.gethostbyaddr(device_ip)
             parts = str(hostname).split(".")
             name = parts[0]
-            # print(name)
+
             if len(parts) > 1:
                 header["Agent_Hostname"] = name
                 logger.debug(f"host={header['Agent_Hostname']} device_ip={device_ip}")
             else:
                 header["Agent_Hostname"] = device_ip
                 logger.debug(f"device_ip={device_ip}")
-        except:  # noqa: E722
+        except socket.herror:
             logger.debug(f"device_ip={device_ip}")
             header["Agent_Hostname"] = device_ip
             pass
 
         header["Agent_Address"] = device_ip
 
-        # Send API call to SNMP MIB server to get var_binds translated
-        # mib_server_url = self._server_config["snmp"]["mib-server"]["url"]
-        mib_server_url = os.environ["MIBS_SERVER_URL"]
-        trap_event_string = get_translation(var_binds, mib_server_url)
+        trap_event_string = asyncio.get_event_loop().run_until_complete(
+            get_translation(var_binds, os.environ["MIBS_SERVER_URL"])
+        )
 
         self._hec_sender.post_data(device_ip, trap_event_string)
 
