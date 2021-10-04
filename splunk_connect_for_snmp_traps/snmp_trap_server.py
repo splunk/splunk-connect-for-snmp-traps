@@ -63,7 +63,7 @@ def main():
     logger.info("Completed Argument parsing")
 
     with open(config_file, "r") as yamlfile:
-        server_config = yaml.safe_load(yamlfile, Loader=yaml.FullLoader)
+        server_config = yaml.safe_load(yamlfile)
 
     logger.debug(f"Server Config is:  {server_config}")
     trap_server = TrapServer(args, server_config)
