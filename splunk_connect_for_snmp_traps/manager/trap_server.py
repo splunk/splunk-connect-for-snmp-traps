@@ -75,11 +75,11 @@ class TrapServer:
         sudo snmptrap -v 2c -c public localhost:2162 123 1.3.6.1.6.3.1.1.5.1 1.3.6.1.2.1.1.5.0 s test2
 
         """
-        for community in snmp_config["communities"].get("v1", None):
+        for community in snmp_config["communities"].get("v1", []):
             logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
 
-        for community in snmp_config["communities"].get("v2", None):
+        for community in snmp_config["communities"].get("v2", []):
             logger.info(f"Configuring V1 {community}")
             config.addV1System(self._snmp_engine, community, community)
 
