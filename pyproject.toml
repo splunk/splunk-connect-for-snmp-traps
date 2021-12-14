@@ -24,7 +24,7 @@ license = "APACHE-2.0"
 python = "^3.8"
 pysnmp = "^4.4.12"
 pyyaml = "^6.0"
-lxml = "^4.6"
+lxml = "^4.7"
 requests = "^2.26.0"
 pymongo = "^3.12.0"
 
